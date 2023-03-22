@@ -98,18 +98,6 @@ function(cppyy_make_python_package)
     set(init_file "${init_file}for p in paths:\n")
     set(init_file "${init_file}    if p and p!=\"\":\n")
     set(init_file "${init_file}        cppyy.add_include_path(p)\n")
-    #---------------------------------------------------------------------------
-    #--Temporary band-aid for MADworld MPI threads fixed in future cling/cppyy---
-    #---------------------------------------------------------------------------
-    if (install_data_MPI)
-        set(init_file "${init_file}cppyy.cppdef(\"\"\"#define thread_local\n")
-        set(init_file "${init_file}#define is_server_thread \*_cling_is_server_thread()\n")
-        set(init_file "${init_file}#include \"${MADNESS_SOURCE_DIR}/src/madness/world/worldrmi.h\"\n")
-        set(init_file "${init_file}#undef thread_local\"\"\")\n")
-    endif()
-    #---------------------------------------------------------------------------
-    #--End of temporary band-aid------------------------------------------------
-    #---------------------------------------------------------------------------
     set(init_file "${init_file}cppyy.include(\"${python_defines_file}\")\n")
     set(init_file "${init_file}headers = \"${include_headers}\".split(';')\n")
     set(init_file "${init_file}for inc in headers:\n")
