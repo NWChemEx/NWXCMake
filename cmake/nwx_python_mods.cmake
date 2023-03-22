@@ -102,12 +102,10 @@ function(cppyy_make_python_package)
     #--Temporary band-aid for MADworld MPI threads fixed in future cling/cppyy---
     #---------------------------------------------------------------------------
     if (install_data_MPI)
-        set(init_file "${init_file}cppyy.cppdef(\"\"\"\\ \n")
-        set(init_file "${init_file}\#define thread_local\n")
-        set(init_file "${init_file}\#define is_server_thread \*_cling_is_server_thread()\n")
-        set(init_file "${init_file}\#include \"${MADNESS_SOURCE_DIR}/src/madness/world/worldrmi.h\"\n")
-        set(init_file "${init_file}\#undef thread_local\n")
-        set(init_file "${init_file}\"\"\")\n")
+        set(init_file "${init_file}cppyy.cppdef(\"\"\"#define thread_local\n")
+        set(init_file "${init_file}#define is_server_thread \*_cling_is_server_thread()\n")
+        set(init_file "${init_file}#include \"${MADNESS_SOURCE_DIR}/src/madness/world/worldrmi.h\"\n")
+        set(init_file "${init_file}#undef thread_local\"\"\")\n")
     endif()
     #---------------------------------------------------------------------------
     #--End of temporary band-aid------------------------------------------------
