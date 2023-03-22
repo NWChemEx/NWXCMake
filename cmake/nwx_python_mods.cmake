@@ -98,9 +98,6 @@ function(cppyy_make_python_package)
     set(init_file "${init_file}for p in paths:\n")
     set(init_file "${init_file}    if p and p!=\"\":\n")
     set(init_file "${init_file}        cppyy.add_include_path(p)\n")
-    #---------------------------------------------------------------------------
-    #--End of temporary band-aid------------------------------------------------
-    #---------------------------------------------------------------------------
     set(init_file "${init_file}cppyy.include(\"${python_defines_file}\")\n")
     set(init_file "${init_file}headers = \"${include_headers}\".split(';')\n")
     set(init_file "${init_file}for inc in headers:\n")
