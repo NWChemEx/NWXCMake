@@ -90,6 +90,15 @@ function(cppyy_make_python_package)
     #---------------------------------------------------------------------------
     set(init_file_name "${output_dir}/__init__.py")
     set(init_file "import cppyy\n\n")
+    #---------------------------------------------------------------------------
+    #----Temporary fix for valarray bug in gcc 10.4 ----------------------------
+    #---------------------------------------------------------------------------
+    set(init_file "${init_file}cppyy.cppdef(\"#if _GLIBCXX_RELEASE == 10\\n\#define noexcept\\n#endif\")\n")
+    set(init_file "${init_file}cppyy.include(\"valarray\")\n")
+    set(init_file "${init_file}cppyy.cppdef(\"#if _GLIBCXX_RELEASE == 10\\n#undef noexcept\\n#endif\")\n")
+    #---------------------------------------------------------------------------
+    #----End temporary fix for valarray bug in gcc 10.4 ------------------------
+    #---------------------------------------------------------------------------
     foreach(deppackage ${install_data_DEPPACKAGES})
         set(init_file "${init_file}from ${deppackage} import \*\n")
     endforeach()
