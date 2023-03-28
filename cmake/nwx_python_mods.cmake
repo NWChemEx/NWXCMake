@@ -95,7 +95,7 @@ function(cppyy_make_python_package)
     #---------------------------------------------------------------------------
     set(init_file "${init_file}cppyy.cppdef(\"#if (_GLIBCXX_RELEASE == 9) || (_GLIBCXX_RELEASE == 10)\\n\#define noexcept\\n#endif\")\n")
     set(init_file "${init_file}cppyy.include(\"valarray\")\n")
-    set(init_file "${init_file}cppyy.cppdef(\"#if (_GLIBCXX_RELEASE == 9) || (_GLIBCXX_RELEASE == 10)\n#undef noexcept\\n#endif\")\n")
+    set(init_file "${init_file}cppyy.cppdef(\"#if (_GLIBCXX_RELEASE == 9) || (_GLIBCXX_RELEASE == 10)\\n#undef noexcept\\n#endif\")\n")
     #---------------------------------------------------------------------------
     #----End temporary fix for valarray bug in gcc 9.5 to 10.4 -----------------
     #---------------------------------------------------------------------------
