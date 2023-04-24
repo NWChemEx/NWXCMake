@@ -16,7 +16,7 @@
 # should be placed next to the shared library created by that target. This
 # function assumes the target's:
 #
-# * public header files are obtained through CMaize BuildTarget `includes` attribute 
+# * public header files are in the ``PUBLIC_HEADER`` property
 # * include paths are in the ``INTERFACE_INCLUDE_DIRECTORIES`` property
 # * dependencies are targets and in the ``INTERFACE_LINK_LIBRARIES`` property
 #
@@ -64,17 +64,8 @@ function(cppyy_make_python_package)
     #---------------------------------------------------------------------------
     #--------------------------Get headers to include---------------------------
     #---------------------------------------------------------------------------
-    # Get the currently active CMaize project
-    cpp_get_global(cmaize_project CMAIZE_PROJECT)
-
-    # Get the desired CMaize target by name (in NWChemEx, this is usually the current project name, too)
-    CMaizeProject(get_target "${cmaize_project}" tgt ${PROJECT_NAME})
-
-    # Get the CMaize BuildTarget `includes` attribute, which is a list of include files for the target
-    BuildTarget(GET "${tgt}" include_headers includes)
-
-    # Print the include file list to make sure everything worked
-    message(DEBUG "include_file_list: ${include_headers}")
+    get_target_property(include_headers ${install_data_PACKAGE} PUBLIC_HEADER)
+    get_filename_component(header_PREFIX ${CMAKE_CURRENT_SOURCE_DIR} NAME_WE)
     #---------------------------------------------------------------------------
     #-----------------Blacklist headers we do not want to expose----------------
     #---------------------------------------------------------------------------
