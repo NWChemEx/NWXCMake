@@ -16,7 +16,7 @@
 # should be placed next to the shared library created by that target. This
 # function assumes the target's:
 #
-# * public header files are obtained through CMaize BuildTarget `includes` attribute 
+# * public header files are in the ``PUBLIC_HEADER`` property
 # * include paths are in the ``INTERFACE_INCLUDE_DIRECTORIES`` property
 # * dependencies are targets and in the ``INTERFACE_LINK_LIBRARIES`` property
 #
