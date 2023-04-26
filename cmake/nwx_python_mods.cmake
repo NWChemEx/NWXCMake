@@ -64,8 +64,20 @@ function(cppyy_make_python_package)
     #---------------------------------------------------------------------------
     #--------------------------Get headers to include---------------------------
     #---------------------------------------------------------------------------
-    get_target_property(include_headers ${install_data_PACKAGE} PUBLIC_HEADER)
-    get_filename_component(header_PREFIX ${CMAKE_CURRENT_SOURCE_DIR} NAME_WE)
+    # Get the currently active CMaize project
+    cpp_get_global(cmaize_project CMAIZE_PROJECT_${PROJECT_NAME})
+    message(DEBUG "PROJECT_NAME: ${PROJECT_NAME}")
+    message(DEBUG "CMAIZE_PROJECT: ${cmaize_project}")
+
+    # Get the desired CMaize target by name (in NWChemEx, this is usually the current project name, too)
+    CMaizeProject(get_target "${cmaize_project}" tgt ${PROJECT_NAME})
+    message(DEBUG "CMAIZE target: ${tgt}")
+
+    # Get the CMaize BuildTarget `includes` attribute, which is a list of include files for the target
+    BuildTarget(GET "${tgt}" include_headers includes)
+
+    # Print the include file list to make sure everything worked
+    message(DEBUG "include_file_list: ${include_headers}")
     #---------------------------------------------------------------------------
     #-----------------Blacklist headers we do not want to expose----------------
     #---------------------------------------------------------------------------
