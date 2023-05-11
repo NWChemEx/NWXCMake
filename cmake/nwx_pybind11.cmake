@@ -29,22 +29,25 @@
 
 include_guard()
 
-#[[[ Wraps the process of creating Python bindings for a target.
+function(find_pybind11 fp_targets)
+
+    set("${fp_targets}" pybind11 Python::Python PARENT_SCOPE)
+endfunction()
+
+#[[[ Wraps the process of compiling Python bindings.
 #
-#    This function will create a CMake target "py_${npm_cxx_target}" from
-#    the C++ source files in the provided source directory. The resulting
-#    bindings will live in a shared library called "${npm_cxx_target}.so",
-#    *i.e.* the C++ target with no "lib" prefix. As long as
-#    "${npm_cxx_target}.so" is in your Python path, you should be able to load
-#    the bindings.
+#    This function will create a CMake target "py_${npm_module_name}". The
+#    resulting bindings will live in a shared library called
+#    "${npm_module_name}.so", *i.e.* the C++ target with no "lib" prefix. As
+#    long as "${npm_module_name}.so" is in your Python path, you should be able
+#    to load the bindings.
 #
-#   :param npm_cxx_target: The name of the C++ target we are creating Python
-#                          bindings for.
-#   :param npm_src_dir: The full path to the directory containing the C++
-#                       source code for the bindings.
-#
+#   :param npm_module_name: The name of the resulting Python module. The
+#                           corresponding target created by this function will
+#                           be named ``py_${npm_module_name}``
+#   :param \*args: The arguments to forward to ``cmaize_add_library``.
 #]]
-function(nwx_pybind11_module npm_cxx_target npm_src_dir)
+function(nwx_add_pybind11_module npm_module_name)
     if("${BUILD_PYBIND11_PYBINDINGS}")
         cmaize_find_or_build_dependency(
             pybind11
@@ -54,18 +57,22 @@ function(nwx_pybind11_module npm_cxx_target npm_src_dir)
             CMAKE_ARGS PYBIND11_INSTALL=ON
                        PYBIND11_FINDPYTHON=ON
         )
-
-        set(_npm_py_target_name "py_${npm_cxx_target}")
+        set(_npm_py_target_name "py_${npm_module_name}")
         cmaize_add_library(
             "${_npm_py_target_name}"
-            SOURCE_DIR "${npm_src_dir}"
-            DEPENDS ${npm_cxx_target} pybind11 Python::Python
+            ${ARGN}
+        )
+        target_include_directories(
+            "${_npm_py_target_name}" PUBLIC pybind11_headers Python::Python
+        )
+        target_link_libraries(
+            "${_npm_py_target_name}" PUBLIC pybind11::embed Python::Python
         )
         set_target_properties(
             "${_npm_py_target_name}"
             PROPERTIES
             PREFIX ""
-            LIBRARY_OUTPUT_NAME "${npm_cxx_target}"
+            LIBRARY_OUTPUT_NAME "${npm_module_name}"
         )
         cmaize_add_package("${_npm_py_target_name}" NAMESPACE nwx::)
     endif()
