@@ -74,6 +74,9 @@ function(nwx_add_pybind11_module npm_module_name)
             PREFIX ""
             LIBRARY_OUTPUT_NAME "${npm_module_name}"
         )
+        if(APPLE) # Handles Mac/Python library suffix confusion
+            set_target_properties("${_npm_py_target_name}" PROPERTIES SUFFIX ".so")
+        endif()
         cmaize_add_package("${_npm_py_target_name}" NAMESPACE nwx::)
     endif()
 endfunction()
