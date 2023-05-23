@@ -29,11 +29,6 @@
 
 include_guard()
 
-function(find_pybind11 fp_targets)
-
-    set("${fp_targets}" pybind11 Python::Python PARENT_SCOPE)
-endfunction()
-
 #[[[ Wraps the process of compiling Python bindings.
 #
 #    This function will create a CMake target "py_${npm_module_name}". The
@@ -74,7 +69,6 @@ function(nwx_add_pybind11_module npm_module_name)
             PREFIX ""
             LIBRARY_OUTPUT_NAME "${npm_module_name}"
         )
-        cmaize_add_package("${_npm_py_target_name}" NAMESPACE nwx::)
     endif()
 endfunction()
 
