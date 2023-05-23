@@ -29,22 +29,17 @@
 
 include_guard()
 
-function(find_pybind11 fp_targets)
-
-    set("${fp_targets}" pybind11 Python::Python PARENT_SCOPE)
-endfunction()
-
 #[[[ Wraps the process of compiling Python bindings.
 #
-#    This function will create a CMake target "py_${npm_module_name}". The
+#    This function will create a CMake target "py_${module_name}". The
 #    resulting bindings will live in a shared library called
-#    "${npm_module_name}.so", *i.e.* the C++ target with no "lib" prefix. As
-#    long as "${npm_module_name}.so" is in your Python path, you should be able
+#    "${module_name}.so", *i.e.* the C++ target with no "lib" prefix. As
+#    long as "${module_name}.so" is in your Python path, you should be able
 #    to load the bindings.
 #
-#   :param npm_module_name: The name of the resulting Python module. The
-#                           corresponding target created by this function will
-#                           be named ``py_${npm_module_name}``
+#   :param module_name: The name of the resulting Python module. The
+#                       corresponding target created by this function will
+#                       be named ``py_${module_name}``
 #   :param \*args: The arguments to forward to ``cmaize_add_library``.
 #]]
 function(nwx_add_pybind11_module npm_module_name)
@@ -107,11 +102,11 @@ endfunction()
 #      script, and NOT a Python package, *i.e.*, a directory with an
 #      ``__init__.py`` file.
 #
-#   :param npt_name: The name for the test. This will be the name CTest
-#                    associates with the test.
-#   :param npt_driver: The name of the Python module responsible for driving
-#                      the test. It is strongly recommended that you pass the
-#                      full path to the Python module.
+#   :param name: The name for the test. This will be the name CTest
+#                associates with the test.
+#   :param driver: The name of the Python module responsible for driving
+#                  the test. It is strongly recommended that you pass the
+#                  full path to the Python module.
 #]]
 function(nwx_pybind11_tests npt_name npt_driver)
     if("${BUILD_PYBIND11_PYBINDINGS}")
