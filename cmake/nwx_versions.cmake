@@ -1,7 +1,7 @@
 # External Dependencies
 set(NWX_CATCH2_VERSION v2.x)
 set(NWX_SPDLOG_VERSION ad0e89cbfb4d0c1ce4d097e134eb7be67baebb36)
-set(NWX_LIBFORT_VERSION master) # CHECK THIS
+set(NWX_LIBFORT_VERSION master)
 set(NWX_ROCKSDB_VERSION v7.0.4)
 set(NWX_LIBINT2_VERSION 2.6.0)
 set(NWX_LIBINTX_VERSION master)
