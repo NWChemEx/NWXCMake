@@ -43,40 +43,61 @@ include_guard()
 #   :param \*args: The arguments to forward to ``cmaize_add_library``.
 #]]
 function(nwx_add_pybind11_module npm_module_name)
-    if("${BUILD_PYBIND11_PYBINDINGS}")
-        cmaize_find_or_build_dependency(
-            pybind11
-            URL github.com/pybind/pybind11
-            BUILD_TARGET pybind11_headers
-            FIND_TARGET pybind11::embed
-            CMAKE_ARGS PYBIND11_INSTALL=ON
-                       PYBIND11_FINDPYTHON=ON
+    if(NOT "${BUILD_PYBIND11_PYBINDINGS}")
+        return()
+    endif()
+    if("${NWX_MODULE_DIRECTORY}" STREQUAL "")
+        message(
+            FATAL_ERROR "NWX_MODULE_DIRECTORY must be set to the directory "
+                        "where you would like the Python modules installed."
         )
-        set(_npm_py_target_name "py_${npm_module_name}")
-        cmaize_add_library(
-            "${_npm_py_target_name}"
-            ${ARGN}
-        )
-        target_include_directories(
-            "${_npm_py_target_name}" PUBLIC pybind11_headers Python::Python
-        )
-        target_link_libraries(
-            "${_npm_py_target_name}" PUBLIC pybind11::embed Python::Python
-        )
+    endif()
+
+    cmaize_find_or_build_dependency(
+        pybind11
+        URL github.com/pybind/pybind11
+        BUILD_TARGET pybind11_headers
+        FIND_TARGET pybind11::embed
+        CMAKE_ARGS PYBIND11_INSTALL=ON
+                   PYBIND11_FINDPYTHON=ON
+    )
+
+    set(_npm_py_target_name "py_${npm_module_name}")
+    cmaize_add_library(
+        "${_npm_py_target_name}"
+        ${ARGN}
+    )
+    target_include_directories(
+        "${_npm_py_target_name}" PUBLIC pybind11_headers Python::Python
+    )
+    target_link_libraries(
+        "${_npm_py_target_name}" PUBLIC pybind11::embed Python::Python
+    )
+
+    # The way we set RPATHs here is higly tied to how CMaize installs things
+    # at present. If CMaize changes, this code will likely need to change too
+    set(_npm_root_install "${CMAKE_INSTALL_PREFIX}/lib/${PROJECT_NAME}")
+    set(_npm_rpath "${_npm_root_install}:${_npm_root_install}/external/lib")
+    set(_npm_rpath "${_npm_rpath}:${_npm_root_install}/external/tmp")
+
+    set_target_properties(
+        "${_npm_py_target_name}"
+        PROPERTIES
+        PREFIX ""
+        LIBRARY_OUTPUT_NAME "${npm_module_name}"
+        INSTALL_RPATH "${_npm_rpath}"
+    )
+    if(APPLE) # Handles Mac/Python library suffix confusion
         set_target_properties(
             "${_npm_py_target_name}"
             PROPERTIES
-            PREFIX ""
-            LIBRARY_OUTPUT_NAME "${npm_module_name}"
+            SUFFIX ".so"
         )
-        if(APPLE) # Handles Mac/Python library suffix confusion
-            set_target_properties(
-                "${_npm_py_target_name}"
-                PROPERTIES
-                SUFFIX ".so"
-            )
-        endif()
     endif()
+    install(
+        TARGETS "${_npm_py_target_name}"
+        DESTINATION "${NWX_MODULE_DIRECTORY}"
+    )
 endfunction()
 
 #[[[ Wraps the process of registering Python-based tests with CTest
@@ -112,16 +133,29 @@ endfunction()
 #                  full path to the Python module.
 #]]
 function(nwx_pybind11_tests npt_name npt_driver)
-    if("${BUILD_PYBIND11_PYBINDINGS}")
-        if("${BUILD_TESTING}")
-            add_test(
-                NAME "${npt_name}"
-                COMMAND Python::Interpreter "${npt_driver}"
-            )
-            set_tests_properties(
-                "${npt_name}"
-                PROPERTIES ENVIRONMENT "PYTHONPATH=${CMAKE_BINARY_DIR}"
-            )
-        endif()
+    if(NOT "${BUILD_PYBIND11_PYBINDINGS}")
+        return()
+    endif()
+
+    set(_npt_options "")
+    set(_npt_one_val "")
+    set(_npt_lists SUBMODULES)
+    cmake_parse_arguments(
+        "_npt" "${_npt_options}" "${_npt_one_val}" "${_npt_lists}" ${ARGN}
+    )
+
+    if("${BUILD_TESTING}")
+        add_test(
+            NAME "${npt_name}"
+            COMMAND Python::Interpreter "${npt_driver}"
+        )
+        set(_npt_py_path "PYTHONPATH=${CMAKE_BINARY_DIR}")
+        foreach(_npt_submod ${_npt_SUBMODULES})
+            message("${_npt_submod}")
+        endforeach()
+        set_tests_properties(
+            "${npt_name}"
+            PROPERTIES ENVIRONMENT "${_npt_py_path}"
+        )
     endif()
 endfunction()
