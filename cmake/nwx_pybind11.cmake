@@ -76,9 +76,10 @@ function(nwx_add_pybind11_module npm_module_name)
 
     # The way we set RPATHs here is higly tied to how CMaize installs things
     # at present. If CMaize changes, this code will likely need to change too
-    set(_npm_root_install "${CMAKE_INSTALL_PREFIX}/lib/${PROJECT_NAME}")
-    set(_npm_rpath "${_npm_root_install}:${_npm_root_install}/external/lib")
-    set(_npm_rpath "${_npm_rpath}:${_npm_root_install}/external/tmp")
+    set(_npm_root_install "${CMAKE_INSTALL_PREFIX}/lib/${CMAKE_PROJECT_NAME}")
+    set(_npm_external "${_npm_root_install}/external")
+    set(_npm_rpath "${_npm_root_install}:${_npm_external}/lib")
+    set(_npm_rpath "${_npm_rpath}:${_npm_external}/tmp")
 
     set_target_properties(
         "${_npm_py_target_name}"
@@ -131,6 +132,13 @@ endfunction()
 #   :param driver: The name of the Python module responsible for driving
 #                  the test. It is strongly recommended that you pass the
 #                  full path to the Python module.
+#
+#   **Keyword Arguments**
+#
+#   :keyword SUBMODULES: A list of other NWChemEx Python submodules which must
+#                        be found in order for the test to run. For now, it is
+#                        assumed that CMaize built the submodules, or they are
+#                        installed in a place which is in the user's PYTHONPATH.
 #]]
 function(nwx_pybind11_tests npt_name npt_driver)
     if(NOT "${BUILD_PYBIND11_PYBINDINGS}")
@@ -145,14 +153,21 @@ function(nwx_pybind11_tests npt_name npt_driver)
     )
 
     if("${BUILD_TESTING}")
+        # Build the PYTHONPATH for the test
+        # N.B. This presently assumes we're building the Python submodules we
+        #      need or they are installed in ${NWX_MODULE_DIRECTORY}
+        set(_npt_py_path "PYTHONPATH=${CMAKE_BINARY_DIR}")
+        foreach(_npt_submod ${_npt_SUBMODULES})
+            set(_npt_dep_dir "${CMAKE_BINARY_DIR}/_deps/${_npt_submod}-build")
+            set(_npt_py_path "${_npt_py_path}:${_npt_dep_dir}")
+        endforeach()
+        set(_npt_py_path )
+
         add_test(
             NAME "${npt_name}"
             COMMAND Python::Interpreter "${npt_driver}"
         )
-        set(_npt_py_path "PYTHONPATH=${CMAKE_BINARY_DIR}")
-        foreach(_npt_submod ${_npt_SUBMODULES})
-            message("${_npt_submod}")
-        endforeach()
+
         set_tests_properties(
             "${npt_name}"
             PROPERTIES ENVIRONMENT "${_npt_py_path}"
