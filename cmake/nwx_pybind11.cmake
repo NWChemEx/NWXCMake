@@ -161,7 +161,6 @@ function(nwx_pybind11_tests npt_name npt_driver)
             set(_npt_dep_dir "${CMAKE_BINARY_DIR}/_deps/${_npt_submod}-build")
             set(_npt_py_path "${_npt_py_path}:${_npt_dep_dir}")
         endforeach()
-        set(_npt_py_path )
 
         add_test(
             NAME "${npt_name}"
