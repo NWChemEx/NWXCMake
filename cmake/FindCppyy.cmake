@@ -15,10 +15,11 @@
 #
 # This CMake module ensures that your Python interpreter has the cppyy module
 # installed. 
+
 #
-# Set minimal cppyy version
+# Get cppyy version
 #
-set(cppyy_version "3.0.0")
+include(nwx_versions)
 #
 # Make sure Python3 is installed
 #
@@ -45,13 +46,13 @@ endif()
 #
 # Try to install cppyy Python package, if it doesn't exist or is incorrect version
 #
-if("${_fcppyy_result}" STREQUAL "" OR NOT "${_fcppyy_result2}" VERSION_EQUAL "${cppyy_version}")
+if("${_fcppyy_result}" STREQUAL "" OR NOT "${_fcppyy_result2}" VERSION_EQUAL "${NWX_CPPYY_VERSION}")
     if(DEFINED ENV{VIRTUAL_ENV} OR DEFINED ENV{CONDA_PREFIX})
         set(_pip_args)
     else()
         set(_pip_args "--user")
     endif()
-    set(_pypkg_name "cppyy==${cppyy_version}")
+    set(_pypkg_name "cppyy==${NWX_CPPYY_VERSION}")
     execute_process(COMMAND ${Python3_EXECUTABLE} -m pip install ${_pypkg_name} ${_pip_args})
     #
     # Check again if cppyy Python works
@@ -69,7 +70,7 @@ if("${_fcppyy_result}" STREQUAL "" OR NOT "${_fcppyy_result2}" VERSION_EQUAL "${
     #
     # Check the version again
     #
-    if("${_fcppyy_result2}" VERSION_EQUAL "${cppyy_version}")
+    if("${_fcppyy_result2}" VERSION_EQUAL "${NWX_CPPYY_VERSION}")
         set(Cppyy_FOUND TRUE)
     else()
         set(Cppyy_FOUND FALSE)
@@ -82,5 +83,5 @@ if(NOT Cppyy_FOUND)
     message("Python3: ${Python3_EXECUTABLE}")
     message("import output: ${_fcppyy_result}")
     message("version output: ${_fcppyy_result2}")
-    message(FATAL_ERROR "CMake could not install cppyy, try installing cppyy ${cppyy_version} manually.")
+    message(FATAL_ERROR "CMake could not install cppyy, try installing cppyy ${NWX_CPPYY_VERSION} manually.")
 endif()
