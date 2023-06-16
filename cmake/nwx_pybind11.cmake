@@ -156,7 +156,8 @@ function(nwx_pybind11_tests npt_name npt_driver)
         # Build the PYTHONPATH for the test
         # N.B. This presently assumes we're building the Python submodules we
         #      need or they are installed in ${NWX_MODULE_DIRECTORY}
-        set(_npt_py_path "PYTHONPATH=${CMAKE_BINARY_DIR}")
+        set(_npt_py_path "PYTHONPATH=${NWX_MODULE_DIRECTORY}")
+        set(_npt_py_path "${_npt_py_path}:${CMAKE_BINARY_DIR}")
         foreach(_npt_submod ${_npt_SUBMODULES})
             set(_npt_dep_dir "${CMAKE_BINARY_DIR}/_deps/${_npt_submod}-build")
             set(_npt_py_path "${_npt_py_path}:${_npt_dep_dir}")
