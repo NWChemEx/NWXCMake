@@ -153,6 +153,7 @@ function(nwx_pybind11_tests npt_name npt_driver)
     )
 
     if("${BUILD_TESTING}")
+        include(CTest)
         # Build the PYTHONPATH for the test
         # N.B. This presently assumes we're building the Python submodules we
         #      need or they are installed in ${NWX_MODULE_DIRECTORY}
