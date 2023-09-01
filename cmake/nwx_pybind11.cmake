@@ -40,9 +40,16 @@ include_guard()
 #   :param module_name: The name of the resulting Python module. The
 #                       corresponding target created by this function will
 #                       be named ``py_${module_name}``
+#   :param INSTALL: (optional) Boolean to enable/disable installation of
+#                       the module. If not defined module will be installed.
 #   :param \*args: The arguments to forward to ``cmaize_add_library``.
 #]]
 function(nwx_add_pybind11_module npm_module_name)
+    set(options)
+    set(oneValueArgs INSTALL)
+    set(multiValueArgs)
+    cmake_parse_arguments(NWX_ADD_PYBIND11_MODULE "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
     if(NOT "${BUILD_PYBIND11_PYBINDINGS}")
         return()
     endif()
@@ -65,7 +72,7 @@ function(nwx_add_pybind11_module npm_module_name)
     set(_npm_py_target_name "py_${npm_module_name}")
     cmaize_add_library(
         "${_npm_py_target_name}"
-        ${ARGN}
+        ${NWX_ADD_PYBIND11_MODULE_UNPARSED_ARGUMENTS}
     )
     target_include_directories(
         "${_npm_py_target_name}" PUBLIC pybind11_headers Python::Python
@@ -95,10 +102,12 @@ function(nwx_add_pybind11_module npm_module_name)
             SUFFIX ".so"
         )
     endif()
-    install(
-        TARGETS "${_npm_py_target_name}"
-        DESTINATION "${NWX_MODULE_DIRECTORY}"
-    )
+    if(NOT DEFINED NWX_ADD_PYBIND11_MODULE_INSTALL OR NWX_ADD_PYBIND11_MODULE_INSTALL)
+        install(
+            TARGETS "${_npm_py_target_name}"
+            DESTINATION "${NWX_MODULE_DIRECTORY}"
+        )
+    endif()
 endfunction()
 
 #[[[ Wraps the process of registering Python-based tests with CTest
