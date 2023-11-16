@@ -60,6 +60,8 @@ function(nwx_add_pybind11_module npm_module_name)
         )
     endif()
 
+    find_package(Python COMPONENTS Interpreter Development)
+
     cmaize_find_or_build_dependency(
         pybind11
         URL github.com/pybind/pybind11
