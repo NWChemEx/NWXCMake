@@ -83,19 +83,41 @@ function(nwx_add_pybind11_module npm_module_name)
         "${_npm_py_target_name}" PUBLIC pybind11::embed Python::Python
     )
 
-    # The way we set RPATHs here is higly tied to how CMaize installs things
-    # at present. If CMaize changes, this code will likely need to change too
-    set(_npm_root_install "${CMAKE_INSTALL_PREFIX}/lib/${CMAKE_PROJECT_NAME}")
-    set(_npm_external "${_npm_root_install}/external")
-    set(_npm_rpath "${_npm_root_install}:${_npm_external}/lib")
-    set(_npm_rpath "${_npm_rpath}:${_npm_external}/tmp")
+    string(FIND "${npm_module_name}" "py_" _npm_py_in_module_name)
+    if(_npm_py_in_module_name)
+        # The way we set RPATHs here is higly tied to how CMaize installs things
+        # at present. If CMaize changes, this code will likely need to change too
+        # set(_npm_root_install "${CMAKE_INSTALL_PREFIX}/lib/${CMAKE_PROJECT_NAME}")
+        # set(_npm_external "${_npm_root_install}/external")
+        # set(_npm_rpath "${_npm_root_install}:${_npm_external}/lib")
+        # set(_npm_rpath "${_npm_rpath}:${_npm_external}/tmp")
+
+        # # Ideally we would fetch install rpath information through the CMaize
+        # # target, but for now we just grab them from CMake properties set
+        # # by CMaize
+        # cpp_get_global(_project CMAIZE_PROJECT)
+        # message(STATUS "_project: ${_project}")
+        # CMaizeProject(GET "${_project}" _project_name name)
+        # message(STATUS "_project_name: ${_project_name}")
+        # message(STATUS "npm_module_name: ${npm_module_name}")
+        # CMaizeProject(get_target "${_project}" _tgt "${npm_module_name}")
+        # message(STATUS "_tgt: ${_tgt}")
+        # CMaizeTarget(GET "${_tgt}" _npm_install_path install_path)
+        # CMaizeTarget(GET_PROPERTY "${_tgt}" _npm_dep_install_path INSTALL_PATH)
+        # CMaizeTarget(GET_PROPERTY "${_tgt}" _npm_dep_install_rpath INSTALL_RPATH)
+        get_target_property(_npm_dep_install_path "${npm_module_name}" INSTALL_PATH)
+        get_target_property(_npm_dep_install_rpath "${npm_module_name}" INSTALL_RPATH)
+
+        list(APPEND _npm_install_rpath ${_npm_dep_install_path})
+        list(APPEND _npm_install_rpath ${_npm_dep_install_rpath})
+    endif()
 
     set_target_properties(
         "${_npm_py_target_name}"
         PROPERTIES
         PREFIX ""
         LIBRARY_OUTPUT_NAME "${npm_module_name}"
-        INSTALL_RPATH "${_npm_rpath}"
+        INSTALL_RPATH "${_npm_install_rpath}"
     )
     if(APPLE) # Handles Mac/Python library suffix confusion
         set_target_properties(
