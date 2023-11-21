@@ -92,21 +92,17 @@ function(nwx_add_pybind11_module npm_module_name)
         # set(_npm_rpath "${_npm_root_install}:${_npm_external}/lib")
         # set(_npm_rpath "${_npm_rpath}:${_npm_external}/tmp")
 
-        # # Ideally we would fetch install rpath information through the CMaize
-        # # target, but for now we just grab them from CMake properties set
-        # # by CMaize
-        # cpp_get_global(_project CMAIZE_PROJECT)
-        # message(STATUS "_project: ${_project}")
-        # CMaizeProject(GET "${_project}" _project_name name)
-        # message(STATUS "_project_name: ${_project_name}")
-        # message(STATUS "npm_module_name: ${npm_module_name}")
-        # CMaizeProject(get_target "${_project}" _tgt "${npm_module_name}")
-        # message(STATUS "_tgt: ${_tgt}")
-        # CMaizeTarget(GET "${_tgt}" _npm_install_path install_path)
-        # CMaizeTarget(GET_PROPERTY "${_tgt}" _npm_dep_install_path INSTALL_PATH)
-        # CMaizeTarget(GET_PROPERTY "${_tgt}" _npm_dep_install_rpath INSTALL_RPATH)
-        get_target_property(_npm_dep_install_path "${npm_module_name}" INSTALL_PATH)
-        get_target_property(_npm_dep_install_rpath "${npm_module_name}" INSTALL_RPATH)
+        # Fetch the install paths of the dependencies from CMaize
+        # Ideally, this would only need to get the install path of the
+        # immediate dependencies, but that is not working for some reason.
+        # Instead, we are grabbing the install path and install rpath of
+        # immediate dependencies, which contains deeper dependencies' install
+        # paths. This bloats the rpath in the target with a lot of
+        # (theoretically) redundant information, but it is necessary right now.
+        cpp_get_global(_project CMAIZE_TOP_PROJECT)
+        CMaizeProject(get_target "${_project}" _tgt "${npm_module_name}")
+        CMaizeTarget(GET "${_tgt}" _npm_dep_install_path install_path)
+        CMaizeTarget(GET_PROPERTY "${_tgt}" _npm_dep_install_rpath INSTALL_RPATH)
 
         list(APPEND _npm_install_rpath ${_npm_dep_install_path})
         list(APPEND _npm_install_rpath ${_npm_dep_install_rpath})
