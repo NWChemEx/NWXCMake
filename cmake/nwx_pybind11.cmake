@@ -85,12 +85,6 @@ function(nwx_add_pybind11_module npm_module_name)
 
     string(FIND "${npm_module_name}" "py_" _npm_py_in_module_name)
     if(_npm_py_in_module_name)
-        # The way we set RPATHs here is higly tied to how CMaize installs things
-        # at present. If CMaize changes, this code will likely need to change too
-        # set(_npm_root_install "${CMAKE_INSTALL_PREFIX}/lib/${CMAKE_PROJECT_NAME}")
-        # set(_npm_external "${_npm_root_install}/external")
-        # set(_npm_rpath "${_npm_root_install}:${_npm_external}/lib")
-        # set(_npm_rpath "${_npm_rpath}:${_npm_external}/tmp")
 
         # Fetch the install paths of the dependencies from CMaize
         # Ideally, this would only need to get the install path of the
