@@ -83,19 +83,31 @@ function(nwx_add_pybind11_module npm_module_name)
         "${_npm_py_target_name}" PUBLIC pybind11::embed Python::Python
     )
 
-    # The way we set RPATHs here is higly tied to how CMaize installs things
-    # at present. If CMaize changes, this code will likely need to change too
-    set(_npm_root_install "${CMAKE_INSTALL_PREFIX}/lib/${CMAKE_PROJECT_NAME}")
-    set(_npm_external "${_npm_root_install}/external")
-    set(_npm_rpath "${_npm_root_install}:${_npm_external}/lib")
-    set(_npm_rpath "${_npm_rpath}:${_npm_external}/tmp")
+    string(FIND "${npm_module_name}" "py_" _npm_py_in_module_name)
+    if(_npm_py_in_module_name)
+
+        # Fetch the install paths of the dependencies from CMaize
+        # Ideally, this would only need to get the install path of the
+        # immediate dependencies, but that is not working for some reason.
+        # Instead, we are grabbing the install path and install rpath of
+        # immediate dependencies, which contains deeper dependencies' install
+        # paths. This bloats the rpath in the target with a lot of
+        # (theoretically) redundant information, but it is necessary right now.
+        cpp_get_global(_project CMAIZE_TOP_PROJECT)
+        CMaizeProject(get_target "${_project}" _tgt "${npm_module_name}")
+        CMaizeTarget(GET "${_tgt}" _npm_dep_install_path install_path)
+        CMaizeTarget(GET_PROPERTY "${_tgt}" _npm_dep_install_rpath INSTALL_RPATH)
+
+        list(APPEND _npm_install_rpath ${_npm_dep_install_path})
+        list(APPEND _npm_install_rpath ${_npm_dep_install_rpath})
+    endif()
 
     set_target_properties(
         "${_npm_py_target_name}"
         PROPERTIES
         PREFIX ""
         LIBRARY_OUTPUT_NAME "${npm_module_name}"
-        INSTALL_RPATH "${_npm_rpath}"
+        INSTALL_RPATH "${_npm_install_rpath}"
     )
     if(APPLE) # Handles Mac/Python library suffix confusion
         set_target_properties(
