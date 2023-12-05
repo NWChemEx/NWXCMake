@@ -1,4 +1,4 @@
-# Copyright 2023 NWChemEx-Project
+# Copyright 2023 NWChemEx
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
 
 ################################################################################
 #
-# The master .gitignore lives at NWChemEx-Project/DeveloperTools. The .gitignore
-# file contained in all other NWChemEx-Project repositories is a synchronized
+# The master .gitignore lives at NWChemEx/DeveloperTools. The .gitignore
+# file contained in all other NWChemEx repositories is a synchronized
 # copy of the master .gitignore. Thus to make changes to the .gitignore file
 # please make them to the master .gitignore file.
 #
