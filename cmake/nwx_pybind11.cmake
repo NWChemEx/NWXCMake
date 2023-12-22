@@ -227,6 +227,10 @@ endfunction()
 #[[[
 # Similar to nwx_pybind11_tests, but using the Tox library.
 #
+# .. note::
+#
+#    This function assumes that Tox has already been installed.
+# 
 # :param name: The name of the test suite.
 # :type name: desc
 # :param dir: The path to the directory containing the ``tox.ini`` file.
