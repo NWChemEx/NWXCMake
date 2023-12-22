@@ -124,6 +124,53 @@ function(nwx_add_pybind11_module npm_module_name)
     endif()
 endfunction()
 
+#[[[
+# Code factorization for determining python paths for NWChemEx repos.
+#
+# :param path: Variable which will hold the Python path.
+# :type path: list[path]*
+# :param kwargs: Keyword arguments to parse.
+#
+# **Keyword Arguments**
+#
+#   :keyword SUBMODULES: A list of other NWChemEx Python submodules which must
+#                        be found in order for the test to run. For now, it is
+#                        assumed that CMaize built the submodules, or they are
+#                        installed in a place which is in the user's PYTHONPATH.
+#]
+#]]
+function(nwx_python_path _npp_path)
+    if(NOT "${BUILD_PYBIND11_PYBINDINGS}")
+        return()
+    endif()
+
+    if(NOT "${BUILD_TESTING}")
+        return()
+    endif()
+
+    set(_npp_options "")
+    set(_npp_one_val "")
+    set(_npp_lists SUBMODULES)
+    cmake_parse_arguments(
+        "_npp" "${_npp_options}" "${_npp_one_val}" "${_npp_lists}" ${ARGN}
+    )
+
+    include(CTest)
+    # N.B. This presently assumes we're building the Python submodules we
+    #      need or they are installed in ${NWX_MODULE_DIRECTORY}
+    set(_npp_py_path "PYTHONPATH=${NWX_MODULE_DIRECTORY}")
+    set(_npp_py_path "${_npp_py_path}:${CMAKE_BINARY_DIR}")
+    foreach(_npp_submod ${_npp_SUBMODULES})
+        set(_npp_dep_dir "${CMAKE_BINARY_DIR}/_deps/${_npp_submod}-build")
+        set(_npp_py_path "${_npp_py_path}:${_npp_dep_dir}")
+    endforeach()
+    if(NOT "${NWX_PYTHON_EXTERNALS}" STREQUAL "")
+        set(_npp_py_path "${_npp_py_path}:${NWX_PYTHON_EXTERNALS}")
+    endif()
+    set("${_npp_path}" "${_npp_py_path}" PARENT_SCOPE)
+endfunction()
+
+
 #[[[ Wraps the process of registering Python-based tests with CTest
 #
 #   Calling this function will register a new Python-based test which can be
@@ -164,40 +211,45 @@ endfunction()
 #                        installed in a place which is in the user's PYTHONPATH.
 #]]
 function(nwx_pybind11_tests npt_name npt_driver)
-    if(NOT "${BUILD_PYBIND11_PYBINDINGS}")
-        return()
-    endif()
+    nwx_python_path(_npt_py_path ${ARGN})
 
-    set(_npt_options "")
-    set(_npt_one_val "")
-    set(_npt_lists SUBMODULES)
-    cmake_parse_arguments(
-        "_npt" "${_npt_options}" "${_npt_one_val}" "${_npt_lists}" ${ARGN}
+    add_test(
+        NAME "${npt_name}"
+        COMMAND Python::Interpreter "${npt_driver}"
     )
 
-    if("${BUILD_TESTING}")
-        include(CTest)
-        # Build the PYTHONPATH for the test
-        # N.B. This presently assumes we're building the Python submodules we
-        #      need or they are installed in ${NWX_MODULE_DIRECTORY}
-        set(_npt_py_path "PYTHONPATH=${NWX_MODULE_DIRECTORY}")
-        set(_npt_py_path "${_npt_py_path}:${CMAKE_BINARY_DIR}")
-        foreach(_npt_submod ${_npt_SUBMODULES})
-            set(_npt_dep_dir "${CMAKE_BINARY_DIR}/_deps/${_npt_submod}-build")
-            set(_npt_py_path "${_npt_py_path}:${_npt_dep_dir}")
-        endforeach()
-        if(NOT "${NWX_PYTHON_EXTERNALS}" STREQUAL "")
-            set(_npt_py_path "${_npt_py_path}:${NWX_PYTHON_EXTERNALS}")
-        endif()
+    set_tests_properties(
+        "${npt_name}"
+        PROPERTIES ENVIRONMENT "${_npt_py_path}"
+    )
+endfunction()
 
-        add_test(
-            NAME "${npt_name}"
-            COMMAND Python::Interpreter "${npt_driver}"
-        )
+#[[[
+# Similar to nwx_pybind11_tests, but using the Tox library.
+#
+# .. note::
+#
+#    This function assumes that Tox has already been installed.
+# 
+# :param name: The name of the test suite.
+# :type name: desc
+# :param dir: The path to the directory containing the ``tox.ini`` file.
+# :type dir: path
+#]]
+function(nwx_tox_test ntt_name ntt_dir)
+    nwx_python_path(_ntt_py_path ${ARGN})
 
-        set_tests_properties(
-            "${npt_name}"
-            PROPERTIES ENVIRONMENT "${_npt_py_path}"
-        )
-    endif()
+    add_test(
+        NAME "${ntt_name}"
+        COMMAND Python::Interpreter
+                "-m" "tox"
+                "--root" "${ntt_dir}"
+                "-c" "${ntt_dir}/tox.ini"
+                "--workdir" "${CMAKE_BINARY_DIR}"
+    )
+
+    set_tests_properties(
+        "${ntt_name}"
+        PROPERTIES ENVIRONMENT "${_ntt_py_path}"
+    )
 endfunction()
