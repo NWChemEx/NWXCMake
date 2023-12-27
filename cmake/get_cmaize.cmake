@@ -30,7 +30,7 @@ function(get_cmaize)
     FetchContent_Declare(
         cmaize
         GIT_REPOSITORY https://github.com/CMakePP/CMakePackagingProject
-        GIT_TAG 1.0.0
+        GIT_TAG v1.0.1
     )
     FetchContent_MakeAvailable(cmaize)
 
