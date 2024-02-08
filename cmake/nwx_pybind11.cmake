@@ -29,6 +29,60 @@
 
 include_guard()
 
+#[[[ Wraps the process of finding Python
+#
+# CMake provides built-in features for finding Python; however, those features
+# support a myriad of configurations and edge-cases. To ensure our build systems
+# are always looking of Python in a uniform manner we introduce the
+# ``nwx_find_python`` function to wrap this process.
+#
+# .. note::
+#
+#    While this function is admittedly quite simple for the moment, based on
+#    previous experience users often have fairly interesting Python
+#    setups/needs. As use of NWX grows I fully expect the complexity of this
+#    function to grow too. That's the justification for factoring it out.
+#
+#]]
+function(nwx_find_python)
+    # We want the first find to be verbose, and all others to be quite. This is
+    # why we use short-circuit logic to avoid subsequent calls to find_package
+    # (as opposed to relying on find_package's short-circuit logic)
+    if(Python_FOUND AND Python3_FOUND)
+        return()
+    endif()
+
+    find_package(Python3 COMPONENTS Interpreter Development)
+    find_package(Python COMPONENTS Interpreter Development)
+endfunction()
+
+#[[[ Wraps the process of finding Pybind11
+#
+# CMaize is very verbose when it looks for dependencies. This wrapper avoids
+# calling CMaize multiple times to reduce the printing.
+#
+# .. note::
+#
+#    This function shouldn't be needed if CMaize#151 is tackled.
+#]]
+function(nwx_find_pybind11)
+    if(TARGET pybind11::embed OR TARGET pybind11_headers)
+        return()
+    endif()
+
+    nwx_find_python()
+
+    cmaize_find_or_build_dependency(
+        pybind11
+        URL github.com/pybind/pybind11
+        BUILD_TARGET pybind11_headers
+        FIND_TARGET pybind11::embed
+        CMAKE_ARGS PYBIND11_INSTALL=ON
+                   PYBIND11_FINDPYTHON=OFF
+    )
+endfunction()
+
+
 #[[[ Wraps the process of compiling Python bindings.
 #
 #    This function will create a CMake target "py_${module_name}". The
@@ -60,16 +114,7 @@ function(nwx_add_pybind11_module npm_module_name)
         )
     endif()
 
-    find_package(Python COMPONENTS Interpreter Development)
-
-    cmaize_find_or_build_dependency(
-        pybind11
-        URL github.com/pybind/pybind11
-        BUILD_TARGET pybind11_headers
-        FIND_TARGET pybind11::embed
-        CMAKE_ARGS PYBIND11_INSTALL=ON
-                   PYBIND11_FINDPYTHON=ON
-    )
+    nwx_find_pybind11()
 
     set(_npm_py_target_name "py_${npm_module_name}")
     cmaize_add_library(
@@ -116,7 +161,8 @@ function(nwx_add_pybind11_module npm_module_name)
             SUFFIX ".so"
         )
     endif()
-    if(NOT DEFINED NWX_ADD_PYBIND11_MODULE_INSTALL OR NWX_ADD_PYBIND11_MODULE_INSTALL)
+    if(NOT DEFINED NWX_ADD_PYBIND11_MODULE_INSTALL OR
+                   NWX_ADD_PYBIND11_MODULE_INSTALL)
         install(
             TARGETS "${_npm_py_target_name}"
             DESTINATION "${NWX_MODULE_DIRECTORY}"
@@ -155,7 +201,6 @@ function(nwx_python_path _npp_path)
         "_npp" "${_npp_options}" "${_npp_one_val}" "${_npp_lists}" ${ARGN}
     )
 
-    include(CTest)
     # N.B. This presently assumes we're building the Python submodules we
     #      need or they are installed in ${NWX_MODULE_DIRECTORY}
     set(_npp_py_path "PYTHONPATH=${NWX_MODULE_DIRECTORY}")
@@ -211,6 +256,8 @@ endfunction()
 #                        installed in a place which is in the user's PYTHONPATH.
 #]]
 function(nwx_pybind11_tests npt_name npt_driver)
+    include(CTest)
+    nwx_find_python()
     nwx_python_path(_npt_py_path ${ARGN})
 
     add_test(
@@ -230,13 +277,15 @@ endfunction()
 # .. note::
 #
 #    This function assumes that Tox has already been installed.
-# 
+#
 # :param name: The name of the test suite.
 # :type name: desc
 # :param dir: The path to the directory containing the ``tox.ini`` file.
 # :type dir: path
 #]]
 function(nwx_tox_test ntt_name ntt_dir)
+    include(CTest)
+    nwx_find_python()
     nwx_python_path(_ntt_py_path ${ARGN})
 
     add_test(
