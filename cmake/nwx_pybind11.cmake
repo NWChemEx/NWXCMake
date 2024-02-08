@@ -66,8 +66,6 @@ endfunction()
 #    This function shouldn't be needed if CMaize#151 is tackled.
 #]]
 function(nwx_find_pybind11)
-    nwx_find_python()
-
     if(TARGET pybind11::embed OR TARGET pybind11_headers)
         return()
     endif()
@@ -78,7 +76,7 @@ function(nwx_find_pybind11)
         BUILD_TARGET pybind11_headers
         FIND_TARGET pybind11::embed
         CMAKE_ARGS PYBIND11_INSTALL=ON
-                   PYBIND11_FINDPYTHON=OFF
+                   PYBIND11_FINDPYTHON=ON
     )
 endfunction()
 
@@ -115,6 +113,7 @@ function(nwx_add_pybind11_module npm_module_name)
     endif()
 
     nwx_find_pybind11()
+    nwx_find_python()
 
     set(_npm_py_target_name "py_${npm_module_name}")
     cmaize_add_library(
