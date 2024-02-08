@@ -66,11 +66,11 @@ endfunction()
 #    This function shouldn't be needed if CMaize#151 is tackled.
 #]]
 function(nwx_find_pybind11)
+    nwx_find_python()
+
     if(TARGET pybind11::embed OR TARGET pybind11_headers)
         return()
     endif()
-
-    nwx_find_python()
 
     cmaize_find_or_build_dependency(
         pybind11
