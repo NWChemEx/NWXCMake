@@ -48,10 +48,11 @@ function(nwx_find_python)
     # We want the first find to be verbose, and all others to be quite. This is
     # why we use short-circuit logic to avoid subsequent calls to find_package
     # (as opposed to relying on find_package's short-circuit logic)
-    if(Python_FOUND)
+    if(Python_FOUND AND Python3_FOUND)
         return()
     endif()
 
+    find_package(Python3 COMPONENTS Interpreter Development)
     find_package(Python COMPONENTS Interpreter Development)
 endfunction()
 
@@ -65,9 +66,11 @@ endfunction()
 #    This function shouldn't be needed if CMaize#151 is tackled.
 #]]
 function(nwx_find_pybind11)
-    if(TARGET pybind11)
+    if(TARGET pybind11::embed OR TARGET pybind11_headers)
         return()
     endif()
+
+    nwx_find_python()
 
     cmaize_find_or_build_dependency(
         pybind11
@@ -75,7 +78,7 @@ function(nwx_find_pybind11)
         BUILD_TARGET pybind11_headers
         FIND_TARGET pybind11::embed
         CMAKE_ARGS PYBIND11_INSTALL=ON
-                  PYBIND11_FINDPYTHON=ON
+                   PYBIND11_FINDPYTHON=OFF
     )
 endfunction()
 
@@ -111,7 +114,6 @@ function(nwx_add_pybind11_module npm_module_name)
         )
     endif()
 
-    nwx_find_python()
     nwx_find_pybind11()
 
     set(_npm_py_target_name "py_${npm_module_name}")
