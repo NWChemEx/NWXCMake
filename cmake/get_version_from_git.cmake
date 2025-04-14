@@ -43,7 +43,7 @@ function(get_version_from_git _gvfg_result _gvfg_git_root)
     # Make sure that Git is available
     # ZDC: Do we want Git to be required? I implemented an alternative below
     #      so that Git is not a hard requirement anymore.
-    find_package(Git QUIET REQUIRED)
+    find_package(Git QUIET)
     message(DEBUG "Git_FOUND: ${Git_FOUND}")
 
     # If Git was not found, the default project version is returned
@@ -70,14 +70,6 @@ function(get_version_from_git _gvfg_result _gvfg_git_root)
     message(DEBUG "Git version tag found: ${_gvfg_version}")
 
     # Remove the "v" prefix, since CMake chokes on it
-    # Issue: ${_gvfg_version} needed to be in double quotes, which is generally
-    #        what should be done in all cases unless you have a *very* good
-    #        reason to do otherwise (some instances of dereferencing lists is
-    #        the only time I can think of). It is possible for _gvfg_version to be
-    #        empty, which causes string(REGEX REPLACE to throw an error about
-    #        not getting enough arguments. Setting  _gvfg_version to an empty
-    #        string before running `execute_process()` surprisingly does not
-    #        mitigate the issue.
     # TODO: Consider using `if("${_gvfg_version}" MATCHES "<regex>")` for more
     #       fine-tuned decisions about what processing may be applied to the
     #       version string from Git.
