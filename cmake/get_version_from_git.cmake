@@ -28,7 +28,7 @@ include_guard()
 #    message("My project's version is: ${MY_PROJECT_VERSION}")
 #]]
 function(get_version_from_git _gvfg_result _gvfg_git_root)
-    # Just default the version to "0.1.0"
+    # Just default the version to "0.1.0" for now
     set(_gvfg_default_version "0.1.0")
     # Alternatively, if there is a project version already set, we could grab
     # that to use as the default. However, this would require the
@@ -36,13 +36,10 @@ function(get_version_from_git _gvfg_result _gvfg_git_root)
     # another `project()` call with the new version or manually setting the
     # correct <PROJECT_NAME>_VERSION* variables.
     # set(_gvfg_default_version "${PROJECT_VERSION}")
-    # TODO: Do it this way or just default to "0.1.0"?
     message(DEBUG "Default Project Version: ${_gvfg_default_version}")
 
 
-    # Make sure that Git is available
-    # ZDC: Do we want Git to be required? I implemented an alternative below
-    #      so that Git is not a hard requirement anymore.
+    # Make Git available
     find_package(Git QUIET)
     message(DEBUG "Git_FOUND: ${Git_FOUND}")
 
@@ -57,10 +54,9 @@ function(get_version_from_git _gvfg_result _gvfg_git_root)
     endif()
 
     # Invoke git command to get the tag
-    # ZDC: What happens when I pull the main branch and do this? Does it give
-    #      a commit hash, the latest tag (which is not guaranteed to be the
-    # correct version), or something else?
-    message(DEBUG "_gvfg_git_root: ${_gvfg_git_root}")
+    # TODO: When a branch or commit is pulled (not a specific tag), this
+    #       command still returns the latest tag. Technically, that is not
+    #       the correct version anymore. Determine the best way to handle this.
     execute_process(
         COMMAND "${GIT_EXECUTABLE}" describe --tags --abbrev=0
         WORKING_DIRECTORY "${_gvfg_git_root}"
@@ -71,8 +67,8 @@ function(get_version_from_git _gvfg_result _gvfg_git_root)
 
     # Remove the "v" prefix, since CMake chokes on it
     # TODO: Consider using `if("${_gvfg_version}" MATCHES "<regex>")` for more
-    #       fine-tuned decisions about what processing may be applied to the
-    #       version string from Git.
+    #       fine-tuned, extendable decision-making about what processing may be
+    #       applied to the version string from Git.
     string(REGEX REPLACE "^v" "" _gvfg_version "${_gvfg_version}")
 
     # If git failed to find a version or it is an invalid format, use the
