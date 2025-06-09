@@ -66,14 +66,14 @@ endfunction()
 #    This function shouldn't be needed if CMaize#151 is tackled.
 #]]
 function(nwx_find_pybind11)
-    if(TARGET pybind11::embed OR TARGET pybind11_headers)
+    if(TARGET pybind11::embed OR TARGET pybind11::headers)
         return()
     endif()
 
     cmaize_find_or_build_dependency(
         pybind11
         URL github.com/pybind/pybind11
-        BUILD_TARGET pybind11_headers
+        BUILD_TARGET pybind11::headers
         FIND_TARGET pybind11::embed
         CMAKE_ARGS PYBIND11_INSTALL=ON
                    PYBIND11_FINDPYTHON=ON
@@ -121,7 +121,7 @@ function(nwx_add_pybind11_module npm_module_name)
         ${NWX_ADD_PYBIND11_MODULE_UNPARSED_ARGUMENTS}
     )
     target_include_directories(
-        "${_npm_py_target_name}" PUBLIC pybind11_headers Python::Python
+        "${_npm_py_target_name}" PUBLIC pybind11::headers Python::Python
     )
     target_link_libraries(
         "${_npm_py_target_name}" PUBLIC pybind11::embed Python::Python
