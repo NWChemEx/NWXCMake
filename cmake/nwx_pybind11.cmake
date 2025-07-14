@@ -66,6 +66,10 @@ endfunction()
 #    This function shouldn't be needed if CMaize#151 is tackled.
 #]]
 function(nwx_find_pybind11)
+    if(NOT "${BUILD_PYBIND11_PYBINDINGS}")
+        return()
+    endif()
+
     if(TARGET pybind11::embed OR TARGET pybind11::headers)
         return()
     endif()
@@ -262,6 +266,10 @@ endfunction()
 #                        installed in a place which is in the user's PYTHONPATH.
 #]]
 function(nwx_pybind11_tests npt_name npt_driver)
+    if(NOT "${BUILD_PYBIND11_PYBINDINGS}")
+        return()
+    endif()
+
     include(CTest)
     nwx_find_python()
     nwx_python_path(_npt_py_path ${ARGN})
@@ -290,6 +298,10 @@ endfunction()
 # :type dir: path
 #]]
 function(nwx_tox_test ntt_name ntt_dir)
+    if(NOT "${BUILD_PYBIND11_PYBINDINGS}")
+        return()
+    endif()
+
     include(CTest)
     nwx_find_python()
     nwx_python_path(_ntt_py_path ${ARGN})
