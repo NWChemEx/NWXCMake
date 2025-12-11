@@ -21,10 +21,6 @@
 #]]
 function(get_cmaize)
 
-    if("${NWX_CMAIZE_VERSION}" STREQUAL "")
-        message(FATAL_ERROR "Expected NWX_CMAIZE_VERSION to be set.")
-    endif()
-
     # Store whether we are building tests or not, then turn off the tests
     set(build_testing_old "${BUILD_TESTING}")
     set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
@@ -34,7 +30,7 @@ function(get_cmaize)
     FetchContent_Declare(
         cmaize
         GIT_REPOSITORY https://github.com/CMakePP/CMaize
-        GIT_TAG ${NWX_CMAIZE_VERSION}
+        GIT_TAG v1.1.10
     )
     FetchContent_MakeAvailable(cmaize)
 
