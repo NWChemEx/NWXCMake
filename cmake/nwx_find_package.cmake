@@ -17,6 +17,15 @@ function(nwx_wrap_target _cmaize_name _target)
 
     # Register the dependency with the current CMake package manager
     CMaizeProject(get_package_manager "${_top_project}" _pm "cmake")
+
+    # TODO: This probably can be eliminated if CMaizeProject(get_package_manager
+    #       uses get_package_manager_instance under the hood
+    # Create new package manager if it doesn't exist
+    if("${_pm}" STREQUAL "")
+        get_package_manager_instance(_pm "cmake")
+        CMaizeProject(add_package_manager "${_top_project}" "${_pm}")
+    endif()
+
     # TODO: Call this with NAME arg to handle components better
     CMakePackageManager(register_dependency
         "${_pm}" __dep "${_pkg_spec}"
