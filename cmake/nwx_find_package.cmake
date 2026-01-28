@@ -16,57 +16,90 @@ include_guard()
 
 include(cmaize/cmaize)
 
-function(nwx_wrap_target _cmaize_name _target)
+#[[[
+# Registers the given existing CMake target with CMaize.
+#
+# This adds the given existing CMake target to both the top-level CMaize
+# project and the CMaize package manager instance for CMake packages.
+#
+# :param cmaize_name: Name of the target as identified in CMaize.
+# :type cmaize_name: desc
+# :param target: Name of the underlying CMake target to be wrapped.
+# :type target: target
+# :param **kwargs: Additional keyword arguments will be passed to CMaize's
+#     ``_fob_parse_arguments()`` (`link <https://github.com/CMakePP/CMaize/blob/master/cmake/cmaize/user_api/dependencies/impl_/parse_arguments.cmake>`__)
+#     and ``CMakePackageManager(register_dependency`` (`link <https://github.com/CMakePP/CMaize/blob/master/cmake/cmaize/package_managers/cmake/cmake_package_manager.cmake#L120>`__).
+#]]
+function(nwx_wrap_target _nwt_cmaize_name _nwt_target)
     # Prepare the new target to be added to the top-level project
-    cpp_get_global(_top_project CMAIZE_TOP_PROJECT)
-    CMaizeTarget(CTOR _tgt_obj "${_target}")
+    cpp_get_global(_nwt_top_project CMAIZE_TOP_PROJECT)
+    CMaizeTarget(CTOR _nwt_tgt_obj "${_nwt_target}")
+
     # install_path needs to be set to something or CMaize ignores the target
     # during config file generation. This will be treated as a pre-installed
     # target found by find_package(), but without a real install path
-    CMaizeTarget(SET "${_tgt_obj}" install_path "tmp")
-    CMaizeProject(add_target "${_top_project}" "${_cmaize_name}" "${_tgt_obj}")
+    CMaizeTarget(SET "${_nwt_tgt_obj}" install_path "tmp")
+    CMaizeProject(add_target
+        "${_nwt_top_project}" "${_nwt_cmaize_name}" "${_nwt_tgt_obj}"
+    )
 
-    # Create package specification objct
-    _fob_parse_arguments(_pkg_spec _pkg_name "${_cmaize_name}" ${ARGN})
+    # Create package specification object
+    _fob_parse_arguments(
+        _nwt_pkg_spec _nwt_pkg_name "${_nwt_cmaize_name}" ${ARGN}
+    )
 
     # Register the dependency with the current CMake package manager
-    CMaizeProject(get_package_manager "${_top_project}" _pm "cmake")
+    CMaizeProject(get_package_manager "${_nwt_top_project}" _nwt_pm "cmake")
 
     # TODO: This probably can be eliminated if CMaizeProject(get_package_manager
     #       uses get_package_manager_instance under the hood
     # Create new package manager if it doesn't exist
-    if("${_pm}" STREQUAL "")
-        get_package_manager_instance(_pm "cmake")
-        CMaizeProject(add_package_manager "${_top_project}" "${_pm}")
+    if("${_nwt_pm}" STREQUAL "")
+        get_package_manager_instance(_nwt_pm "cmake")
+        CMaizeProject(add_package_manager "${_nwt_top_project}" "${_nwt_pm}")
     endif()
 
     # TODO: Call this with NAME arg to handle components better
     CMakePackageManager(register_dependency
-        "${_pm}" __dep "${_pkg_spec}"
+        "${_nwt_pm}" __dep "${_nwt_pkg_spec}"
         # Set both find and built target to avoid having COMPONENTS "" added
         # to every find_dependency() call generated
-        FIND_TARGET "${_target}"
+        FIND_TARGET "${_nwt_target}"
         ${ARGN}
     )
 endfunction()
 
-function(nwx_find_package _package_name)
+#[[[
+# Wraps the CMake ``find_package()`` call, also adding the target to CMaize.
+#
+# :param package_name: Name of the package to be found.
+# :type package_name: desc
+# :param TARGETS: Keyword argument of "CMaize name" "CMake target" pairs,
+#     defaults to "package_name" "package_name".
+# :type TARGETS: List of desc or target
+# :param **kwargs: Additional keyword arguments will be passed to CMaize's
+#     ``find_packages()`` (`link <https://cmake.org/cmake/help/latest/command/find_package.html>`__).
+#]]
+function(nwx_find_package _nfp_package_name)
     set(_nfp_options "")
     set(_nfp_one_value "")
     # TARGETS option comes in pairs of "CMaize name" "CMake target"
     set(_nfp_multi_value "TARGETS")
     cmake_parse_arguments(_nfp "${_nfp_options}" "${_nfp_one_value}" "${_nfp_multi_value}" ${ARGN})
 
-    # If TARGETS is not given, default the pairing to "${_package_name}" "${_package_name}"
+    # If TARGETS is not given, default the pairing to "${_nfp_package_name}" "${_nfp_package_name}"
     list(LENGTH _nfp_TARGETS _nfp_TARGETS_len)
     if(_nfp_TARGETS_len LESS_EQUAL 0)
-        message(WARNING "No targets provided. Using default dependency target \"${_package_name}\" for \"${_package_name}\"")
-        set(_nfp_TARGETS "${_package_name}" "${_package_name}")
-        list(LENGTH _nfp_TARGETS _nfp_TARGETS_len)
+        message(WARNING "No targets provided. Using default dependency target \"${_nfp_package_name}\" for \"${_nfp_package_name}\"")
+        set(_nfp_TARGETS "${_nfp_package_name}" "${_nfp_package_name}")
     endif()
 
     # Validate that TARGETS is in the correct pair-wise form, simultaneously
-    # TODO: Assert that length is even
+    list(LENGTH _nfp_TARGETS _nfp_TARGETS_len)
+    math(EXPR _nfp_TARGETS_is_odd "${_nfp_TARGETS_len} % 2")
+    if(_nfp_TARGETS_is_odd EQUAL 0)
+        cpp_raise(InvalidArgument "TARGETS list length is odd, but must be even pairs.")
+    endif()
 
     # Turn TARGETS into a map of CMaize name -> CMake target
     cpp_map(CTOR _nfp_target_map)
@@ -83,10 +116,10 @@ function(nwx_find_package _package_name)
     cpp_map(KEYS "${_nfp_target_map}" _nfp_cmaize_names)
 
     # Call find_package() to do the heavy lifting and find everything
-    message(STATUS "Searching for ${_package_name}")
-    find_package("${_package_name}" ${_nfp_UNPARSED_ARGUMENTS})
+    message(STATUS "Searching for ${_nfp_package_name}")
+    find_package("${_nfp_package_name}" ${_nfp_UNPARSED_ARGUMENTS})
 
-    message(DEBUG "${_package_name}_FOUND: ${${_package_name}_FOUND}")
+    message(DEBUG "${_nfp_package_name}_FOUND: ${${_nfp_package_name}_FOUND}")
 
     # Make sure each expected target exists after the find_package() call
     foreach(_nfp_cmaize_name ${_nfp_cmaize_names})
@@ -103,7 +136,7 @@ function(nwx_find_package _package_name)
 
     # Default to matching NAME and BUILD_TARGET so the find_dependency() call
     # doesn't have components
-    set(_nfp_build_target "${_package_name}")
+    set(_nfp_build_target "${_nfp_package_name}")
 
     # Handle components
     set(_nfp_multi_value "COMPONENTS")
@@ -127,15 +160,15 @@ function(nwx_find_package _package_name)
         # nwx_wrap_target("${_nfp_cmaize_name}" "${_nfp_cmake_target}")
 
         nwx_wrap_target("${_nfp_cmaize_name}" "${_nfp_cmake_target}"
-            NAME "${_package_name}"
+            NAME "${_nfp_package_name}"
             BUILD_TARGET "${_nfp_build_target}"
         )
     endforeach()
 
     # foreach(_nfp_component ${_nfp_COMPONENTS})
-    #     set(_nfp_cmaize_name "${_package_name}_${_nfp_component}")
+    #     set(_nfp_cmaize_name "${_nfp_package_name}_${_nfp_component}")
     #     nwx_wrap_target("${_nfp_cmaize_name}" "${_nfp_component}"
-    #         NAME "${_package_name}"
+    #         NAME "${_nfp_package_name}"
     #         BUILD_TARGET "${_nfp_component}"
     #     )
     # endforeach()
