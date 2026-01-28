@@ -157,20 +157,10 @@ function(nwx_find_package _nfp_package_name)
             _nfp_cmake_target "${_nfp_cmaize_name}"
         )
 
-        # nwx_wrap_target("${_nfp_cmaize_name}" "${_nfp_cmake_target}")
-
         nwx_wrap_target("${_nfp_cmaize_name}" "${_nfp_cmake_target}"
             NAME "${_nfp_package_name}"
             BUILD_TARGET "${_nfp_build_target}"
         )
     endforeach()
-
-    # foreach(_nfp_component ${_nfp_COMPONENTS})
-    #     set(_nfp_cmaize_name "${_nfp_package_name}_${_nfp_component}")
-    #     nwx_wrap_target("${_nfp_cmaize_name}" "${_nfp_component}"
-    #         NAME "${_nfp_package_name}"
-    #         BUILD_TARGET "${_nfp_component}"
-    #     )
-    # endforeach()
 
 endfunction()
