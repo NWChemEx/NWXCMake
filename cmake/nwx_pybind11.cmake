@@ -77,6 +77,7 @@ function(nwx_find_pybind11)
     cmaize_find_or_build_dependency(
         pybind11
         URL github.com/pybind/pybind11
+        VERSION v3.0.2
         BUILD_TARGET pybind11::headers
         FIND_TARGET pybind11::embed
         CMAKE_ARGS PYBIND11_INSTALL=ON
