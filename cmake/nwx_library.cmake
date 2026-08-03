@@ -32,26 +32,40 @@ endfunction()
 # nwx_library(name inc_dir src_dir
 #     [ecosystem_dep ...]          <- PUBLIC ecosystem deps (utilities, parallelzone, …)
 #     [PUBLIC  ext_dep ...]        <- additional PUBLIC deps by NWX short name
-#     [PRIVATE ext_dep ...])       <- PRIVATE deps by NWX short name
+#     [PRIVATE ext_dep ...]        <- PRIVATE deps by NWX short name
+#     [SOURCES file ...]           <- explicit source list, overrides the
+#                                     default `${src_dir}/*.cpp` glob (use
+#                                     when src_dir contains other, unrelated
+#                                     .cpp files that must not be swept in)
+#     [TYPE <STATIC|SHARED|...>]   <- forwarded to add_library(); omit to use
+#                                     the default (BUILD_SHARED_LIBS-controlled)
+#     [NO_INSTALL])                <- skip install_library() for this target
 #
 # PUBLIC and PRIVATE deps use the same short names as get_dependencies() so
 # callers never need to know the underlying CMake target names.
 # get_dependencies() publishes NWX_DEP_TARGET_<name> cache vars that this
 # function reads to resolve short names → real targets.
 function(nwx_library nl_project_name nl_inc_dir nl_src_dir)
-    cmake_parse_arguments(nl "" "" "PUBLIC;PRIVATE" ${ARGN})
+    cmake_parse_arguments(nl "NO_INSTALL" "TYPE" "PUBLIC;PRIVATE;SOURCES" ${ARGN})
     # nl_UNPARSED_ARGUMENTS = positional ecosystem deps (stay PUBLIC)
     # nl_PUBLIC              = extra PUBLIC deps by short name
     # nl_PRIVATE             = PRIVATE deps by short name
+    # nl_SOURCES             = explicit source list (overrides the glob)
+    # nl_TYPE                = library type forwarded to add_library()
+    # nl_NO_INSTALL          = skip install_library()
 
     _nwx_resolve_dep_names(_nl_pub_extra ${nl_PUBLIC})
     _nwx_resolve_dep_names(_nl_priv      ${nl_PRIVATE})
 
-    file(GLOB_RECURSE __nl_source_files CONFIGURE_DEPENDS ${nl_src_dir}/*.cpp)
-    list(FILTER __nl_source_files EXCLUDE REGEX ".*/export_.*\\.cpp$")
+    if(nl_SOURCES)
+        set(__nl_source_files ${nl_SOURCES})
+    else()
+        file(GLOB_RECURSE __nl_source_files CONFIGURE_DEPENDS ${nl_src_dir}/*.cpp)
+        list(FILTER __nl_source_files EXCLUDE REGEX ".*/export_.*\\.cpp$")
+    endif()
 
     if(__nl_source_files)
-        add_library(${nl_project_name} ${__nl_source_files})
+        add_library(${nl_project_name} ${nl_TYPE} ${__nl_source_files})
         target_link_libraries(${nl_project_name}
             PUBLIC  ${nl_UNPARSED_ARGUMENTS} ${_nl_pub_extra}
             PRIVATE ${_nl_priv}
@@ -98,9 +112,11 @@ function(nwx_library nl_project_name nl_inc_dir nl_src_dir)
         )
     endif()
 
-    include(install_target)
-    install_library(
-        ${nl_project_name}
-        "${CMAKE_CURRENT_SOURCE_DIR}/${nl_inc_dir}"
-    )
+    if(NOT nl_NO_INSTALL)
+        include(install_target)
+        install_library(
+            ${nl_project_name}
+            "${CMAKE_CURRENT_SOURCE_DIR}/${nl_inc_dir}"
+        )
+    endif()
 endfunction()
