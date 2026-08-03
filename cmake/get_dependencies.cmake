@@ -43,7 +43,25 @@ function(get_dependencies)
     endforeach()
 
     if(_gd_fc_names)
+        # Ecosystem deps (utilities, parallelzone, ...) are pulled in via
+        # FetchContent_MakeAvailable, which runs their CMakeLists.txt as a
+        # subdirectory of this build -- sharing this project's BUILD_TESTING
+        # / INTEGRATION_TESTING cache variables verbatim. Left alone, a
+        # developer build (DEVELOPER_SETUP=ON, both ON) would also configure
+        # and register every dependency's own unit *and* integration tests.
+        # Force both off for the duration of the fetch, then restore, so
+        # only this project's own tests are built (mirrors the per-dependency
+        # BUILD_TESTING backup/restore already used by libxc.cmake et al.,
+        # extended here to cover INTEGRATION_TESTING too).
+        set(_gd_bt_backup "${BUILD_TESTING}")
+        set(_gd_it_backup "${INTEGRATION_TESTING}")
+        set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+        set(INTEGRATION_TESTING OFF CACHE BOOL "" FORCE)
         FetchContent_MakeAvailable(${_gd_fc_names})
+        set(BUILD_TESTING "${_gd_bt_backup}" CACHE BOOL "" FORCE)
+        set(INTEGRATION_TESTING "${_gd_it_backup}" CACHE BOOL "" FORCE)
+        unset(_gd_bt_backup)
+        unset(_gd_it_backup)
     endif()
 
     # Record the build-tree location of any fetched dependency's own pybind11
