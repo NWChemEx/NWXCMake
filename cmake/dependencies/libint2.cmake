@@ -74,6 +74,21 @@ endif()
 set(BUILD_TESTING "${_gd_bt_backup}" CACHE BOOL "" FORCE)
 unset(_gd_bt_backup)
 
+# Unlike most well-behaved CMake projects, libint2's own CMakeLists.txt
+# registers its "libint2/..." CTest tests (eritest, unit, hf, hf++, ...)
+# unconditionally -- it never checks BUILD_TESTING, so backing that variable
+# off above (or the consuming project's own BUILD_TESTING=OFF) has no effect
+# on them. They also assume libint2's *own* build tree layout/build type and
+# fail to even configure when re-triggered standalone from a consumer's
+# ctest run (e.g. "include could not find requested file: nwx_set_version").
+# Explicitly disable every test libint2 registered in its own directory so a
+# consumer's `ctest` run exercises only its own tests.
+get_property(_libint2_own_tests DIRECTORY "${libint2_SOURCE_DIR}" PROPERTY TESTS)
+if(_libint2_own_tests)
+    set_tests_properties(${_libint2_own_tests} PROPERTIES DISABLED TRUE)
+endif()
+unset(_libint2_own_tests)
+
 # Libint2's config exports Libint2::int2 (C library) / Libint2::cxx (C++ API);
 # consumers link the C++ API target.
 set(_gd_target_libint2 "Libint2::int2")
