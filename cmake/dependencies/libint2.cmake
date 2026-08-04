@@ -44,9 +44,33 @@ set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
 # targets, never its installed package config.
 set(_gd_skip_install_backup "${CMAKE_SKIP_INSTALL_RULES}")
 set(CMAKE_SKIP_INSTALL_RULES ON)
+
+# Unlike most well-behaved CMake projects, libint2's own CMakeLists.txt
+# registers its "libint2/..." CTest tests (eritest, unit, hf, hf++, ...)
+# unconditionally -- it never checks BUILD_TESTING, so backing that
+# variable off above has no effect on them. They also assume libint2's own
+# build tree layout/build type and fail outright when re-triggered from a
+# consumer's ctest run (e.g. "include could not find requested file:
+# nwx_set_version"). set_tests_properties() can't reach into libint2's
+# directory scope after the fact to disable them (CMake only lets a
+# directory manage tests it registered itself), so suppress add_test()
+# entirely for the duration of this fetch instead. The first override of a
+# built-in command makes the real implementation callable as "_add_test";
+# capture that once and gate on a flag so this can be turned back on
+# afterward without re-shadowing (a second `function(add_test)` would just
+# rename *this* wrapper to "_add_test", losing the real one).
+set(_libint2_suppress_add_test TRUE)
+function(add_test)
+    if(_libint2_suppress_add_test)
+        return()
+    endif()
+    _add_test(${ARGN})
+endfunction()
+
 FetchContent_MakeAvailable(libint2)
 set(CMAKE_SKIP_INSTALL_RULES "${_gd_skip_install_backup}")
 unset(_gd_skip_install_backup)
+set(_libint2_suppress_add_test FALSE)
 
 # CMAKE_SKIP_INSTALL_RULES stops libint2 from writing its own
 # cmake_install.cmake, but the parent directory's generated cmake_install.cmake
@@ -73,21 +97,6 @@ endif()
 
 set(BUILD_TESTING "${_gd_bt_backup}" CACHE BOOL "" FORCE)
 unset(_gd_bt_backup)
-
-# Unlike most well-behaved CMake projects, libint2's own CMakeLists.txt
-# registers its "libint2/..." CTest tests (eritest, unit, hf, hf++, ...)
-# unconditionally -- it never checks BUILD_TESTING, so backing that variable
-# off above (or the consuming project's own BUILD_TESTING=OFF) has no effect
-# on them. They also assume libint2's *own* build tree layout/build type and
-# fail to even configure when re-triggered standalone from a consumer's
-# ctest run (e.g. "include could not find requested file: nwx_set_version").
-# Explicitly disable every test libint2 registered in its own directory so a
-# consumer's `ctest` run exercises only its own tests.
-get_property(_libint2_own_tests DIRECTORY "${libint2_SOURCE_DIR}" PROPERTY TESTS)
-if(_libint2_own_tests)
-    set_tests_properties(${_libint2_own_tests} PROPERTIES DISABLED TRUE)
-endif()
-unset(_libint2_own_tests)
 
 # Libint2's config exports Libint2::int2 (C library) / Libint2::cxx (C++ API);
 # consumers link the C++ API target.
