@@ -53,18 +53,31 @@ set(CMAKE_SKIP_INSTALL_RULES ON)
 # consumer's ctest run (e.g. "include could not find requested file:
 # nwx_set_version"). set_tests_properties() can't reach into libint2's
 # directory scope after the fact to disable them (CMake only lets a
-# directory manage tests it registered itself), so suppress add_test()
-# entirely for the duration of this fetch instead. The first override of a
-# built-in command makes the real implementation callable as "_add_test";
-# capture that once and gate on a flag so this can be turned back on
-# afterward without re-shadowing (a second `function(add_test)` would just
-# rename *this* wrapper to "_add_test", losing the real one).
+# directory manage tests it registered itself), so intercept add_test()
+# for the duration of this fetch and mark each test DISABLED right where
+# it's registered instead -- that call executes in the *caller's* (i.e.
+# libint2's) directory scope, so it can see the test. Still calling
+# through to the real add_test (rather than a no-op) matters: libint2
+# immediately follows several add_test() calls with its own
+# set_tests_properties() (e.g. FIXTURES_SETUP), which would itself error
+# out "Can not find test" if the test were never actually created. The
+# first override of a built-in command makes the real implementation
+# callable as "_add_test"; capture that once and gate on a flag so this
+# can be turned back on afterward without re-shadowing (a second
+# `function(add_test)` would just rename *this* wrapper to "_add_test",
+# losing the real one).
 set(_libint2_suppress_add_test TRUE)
 function(add_test)
-    if(_libint2_suppress_add_test)
-        return()
-    endif()
     _add_test(${ARGN})
+    if(_libint2_suppress_add_test)
+        list(GET ARGN 0 _libint2_add_test_first_arg)
+        if(_libint2_add_test_first_arg STREQUAL "NAME")
+            list(GET ARGN 1 _libint2_add_test_name)
+        else()
+            set(_libint2_add_test_name "${_libint2_add_test_first_arg}")
+        endif()
+        set_tests_properties(${_libint2_add_test_name} PROPERTIES DISABLED TRUE)
+    endif()
 endfunction()
 
 FetchContent_MakeAvailable(libint2)
