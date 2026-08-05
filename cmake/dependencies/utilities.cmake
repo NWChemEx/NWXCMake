@@ -18,7 +18,7 @@ include(FetchContent)
 FetchContent_Declare(
     utilities
     GIT_REPOSITORY https://github.com/NWChemEx/Utilities
-    GIT_TAG        build_overhaul
+    GIT_TAG        master
 )
 
 if(SKBUILD)
