@@ -18,7 +18,7 @@ include(FetchContent)
 FetchContent_Declare(
     wtf
     GIT_REPOSITORY https://github.com/nwchemex/WeaklyTypedFloat
-    GIT_TAG        "python_bindings"
+    GIT_TAG        "master"
 )
 
 if(SKBUILD)
