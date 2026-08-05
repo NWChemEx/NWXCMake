@@ -1,0 +1,40 @@
+# Copyright 2026 NWChemEx-Project
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This file makes NWXCMake pip-installable. Its sole purpose is to expose the
+# repo's cmake/ module directory to downstream projects so their build systems
+# can locate the shared modules *before* CMake's project() command runs. An
+# editable install (`pip install -e .`) resolves back to this working copy, so
+# local edits to the cmake/ modules are picked up with no git push. A regular
+# (wheel) install bundles a copy of cmake/ inside the package.
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nwchemex-nwxcmake"
+version = "0.1.0"
+description = "Shared NWChemEx CMake modules, discoverable from Python"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.8"
+
+[tool.hatch.build.targets.wheel]
+# The importable Python package lives under python/nwxcmake ...
+packages = ["python/nwxcmake"]
+
+[tool.hatch.build.targets.wheel.force-include]
+# ... while the repo-root cmake/ modules are bundled into the wheel next to it
+# so that non-editable installs are self-contained (see cmake_dir() locator).
+"cmake" = "nwxcmake/cmake"
