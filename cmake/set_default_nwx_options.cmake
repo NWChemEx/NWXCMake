@@ -99,15 +99,15 @@ endif()
 
 if(DEVELOPER_SETUP)
     set(BUILD_TESTING
-        ON 
-        CACHE BOOL 
-        "Whether to build the unit tests" 
+        ON
+        CACHE BOOL
+        "Whether to build the unit tests"
         FORCE
     )
-    set(INTEGRATION_TESTING 
-        ON 
-        CACHE BOOL 
-        "Should we build the integration tests?" 
+    set(INTEGRATION_TESTING
+        ON
+        CACHE BOOL
+        "Should we build the integration tests?"
         FORCE
     )
     include(nwx_setup_pre_commit)
