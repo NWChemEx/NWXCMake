@@ -17,7 +17,7 @@ include(FetchContent)
 
 FetchContent_Declare(
     pluginplay
-    GIT_REPOSITORY https://github.com/ryanmrichard/PluginPlay
+    GIT_REPOSITORY https://github.com/NWChemEx/PluginPlay
     GIT_TAG        build_overhaul
 )
 

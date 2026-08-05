@@ -22,7 +22,7 @@ on:
 
 jobs:
   tag-commit:
-    uses: ryanmrichard/.github/.github/workflows/tag.yaml@master
+    uses: NWChemEx/.github/.github/workflows/tag.yaml@master
     secrets: inherit
 
   deploy_to_pypi:
@@ -32,10 +32,9 @@ jobs:
       id-token: write
     steps:
       - name: Build PyPI Distribution
-        uses: ryanmrichard/.github/.github/actions/build_pypi_dist@master
+        uses: NWChemEx/.github/.github/actions/build_pypi_dist@master
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/
-          repository-url: https://test.pypi.org/legacy/

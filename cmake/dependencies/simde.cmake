@@ -17,7 +17,7 @@ include(FetchContent)
 
 FetchContent_Declare(
     simde
-    GIT_REPOSITORY https://github.com/ryanmrichard/SimDE
+    GIT_REPOSITORY https://github.com/NWChemEx/SimDE
     GIT_TAG        build_overhaul
 )
 

@@ -17,7 +17,7 @@ include(FetchContent)
 
 FetchContent_Declare(
     nwchemex
-    GIT_REPOSITORY https://github.com/ryanmrichard/NWChemEx
+    GIT_REPOSITORY https://github.com/NWChemEx/NWChemEx
     GIT_TAG        build_overhaul
 )
 

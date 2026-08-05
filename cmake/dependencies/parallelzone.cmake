@@ -17,7 +17,7 @@ include(FetchContent)
 
 FetchContent_Declare(
     parallelzone
-    GIT_REPOSITORY https://github.com/ryanmrichard/ParallelZone
+    GIT_REPOSITORY https://github.com/NWChemEx/ParallelZone
     GIT_TAG        build_overhaul
 )
 

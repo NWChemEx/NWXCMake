@@ -17,7 +17,7 @@ include(FetchContent)
 
 FetchContent_Declare(
     chemcache
-    GIT_REPOSITORY https://github.com/ryanmrichard/ChemCache
+    GIT_REPOSITORY https://github.com/NWChemEx/ChemCache
     GIT_TAG        build_overhaul
 )
 

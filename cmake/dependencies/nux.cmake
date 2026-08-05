@@ -17,7 +17,7 @@ include(FetchContent)
 
 FetchContent_Declare(
     nux
-    GIT_REPOSITORY https://github.com/ryanmrichard/NUX
+    GIT_REPOSITORY https://github.com/NWChemEx/NUX
     GIT_TAG        build_overhaul
 )
 

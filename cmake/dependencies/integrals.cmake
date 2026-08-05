@@ -17,7 +17,7 @@ include(FetchContent)
 
 FetchContent_Declare(
     integrals
-    GIT_REPOSITORY https://github.com/ryanmrichard/Integrals
+    GIT_REPOSITORY https://github.com/NWChemEx/Integrals
     GIT_TAG        build_overhaul
 )
 

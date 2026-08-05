@@ -17,7 +17,7 @@ include(FetchContent)
 
 FetchContent_Declare(
     tensorwrapper
-    GIT_REPOSITORY https://github.com/ryanmrichard/TensorWrapper
+    GIT_REPOSITORY https://github.com/NWChemEx/TensorWrapper
     GIT_TAG        build_overhaul
 )
 

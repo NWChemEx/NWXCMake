@@ -22,10 +22,10 @@ on:
 
 jobs:
   check_formatting:
-    uses: ryanmrichard/.github/.github/workflows/check_formatting.yaml@master
+    uses: NWChemEx/.github/.github/workflows/check_formatting.yaml@master
 
   test_pip_build:
-    uses: ryanmrichard/.github/.github/workflows/test_nwx_pip_build.yaml@master
+    uses: NWChemEx/.github/.github/workflows/test_nwx_pip_build.yaml@master
     with:
       run_cmake_tests: "false"
 
@@ -33,4 +33,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Build PyPI Distribution
-        uses: ryanmrichard/.github/.github/actions/build_pypi_dist@master
+        uses: NWChemEx/.github/.github/actions/build_pypi_dist@master
