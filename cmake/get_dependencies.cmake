@@ -21,6 +21,20 @@ function(get_dependencies)
     if(SKBUILD)
         include(dependencies/skbuild_python)
     endif()
+
+    # Dependencies found via find_package() below (gauxc, libxc, gau2grid,
+    # ...) must only ever resolve against CMAKE_PREFIX_PATH (the active
+    # venv, populated by get_skbuild_python_path() above) -- never against
+    # the CMake User/System Package Registry (~/.cmake/packages), which
+    # holds export(PACKAGE ...) entries pointing at whichever build tree
+    # produced them. Those build trees (e.g. some other repo's build/_deps)
+    # can be deleted at any time, so a registry hit can resolve to a target
+    # whose files no longer exist -- exactly the kind of stale-match bug
+    # this avoids.
+    set(CMAKE_FIND_PACKAGE_NO_PACKAGE_REGISTRY ON CACHE BOOL
+        "Never resolve find_package() against ~/.cmake/packages")
+    set(CMAKE_EXPORT_NO_PACKAGE_REGISTRY ON CACHE BOOL
+        "Never let export(PACKAGE ...) write to ~/.cmake/packages")
     foreach(depend_i ${ARGN})
         message(STATUS "Fetching dependency: ${depend_i}")
         set(_gd_uses_fc TRUE)

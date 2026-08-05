@@ -15,6 +15,28 @@
 include_guard()
 include(FetchContent)
 
+# Reuse a previously-installed copy from the active venv's site-packages
+# (NWX_VENV_SITE_PACKAGES, set by get_skbuild_python_path()) if one exists,
+# instead of re-cloning and rebuilding libxc from source every time. Scoped
+# to exactly that directory (NO_DEFAULT_PATH) so this can never accidentally
+# match an unrelated system-wide install (e.g. Homebrew).
+if(NWX_VENV_SITE_PACKAGES)
+    # A dependency fetched earlier in this same configure (e.g. GauXC, which
+    # transitively fetches its own libxc) can leave a stale/negative
+    # Libxc_DIR cache entry behind from its own unrelated, unscoped
+    # find_package() attempt; clear it first so our scoped lookup below
+    # always gets a fresh, authoritative search.
+    unset(Libxc_DIR CACHE)
+    find_package(Libxc CONFIG QUIET
+        PATHS "${NWX_VENV_SITE_PACKAGES}" NO_DEFAULT_PATH
+    )
+endif()
+if(TARGET Libxc::xc)
+    set(_gd_target_libxc "Libxc::xc")
+    set(_gd_uses_fc FALSE)
+    return()
+endif()
+
 FetchContent_Declare(
     libxc
     GIT_REPOSITORY https://gitlab.com/libxc/libxc

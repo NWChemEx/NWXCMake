@@ -15,6 +15,28 @@
 include_guard()
 include(FetchContent)
 
+# Reuse a previously-installed copy from the active venv's site-packages
+# (NWX_VENV_SITE_PACKAGES, set by get_skbuild_python_path()) if one exists,
+# instead of re-cloning and rebuilding gau2grid from source every time.
+# Scoped to exactly that directory (NO_DEFAULT_PATH) so this can never
+# accidentally match an unrelated system-wide install (e.g. Homebrew).
+if(NWX_VENV_SITE_PACKAGES)
+    # GauXC's own (unrelated, unscoped) internal find_package(gau2grid) call
+    # for its own grid-generation code can leave a stale/negative
+    # gau2grid_DIR cache entry behind from earlier in this same configure;
+    # clear it first so our scoped lookup below always gets a fresh,
+    # authoritative search instead of silently reusing that unrelated result.
+    unset(gau2grid_DIR CACHE)
+    find_package(gau2grid CONFIG QUIET
+        PATHS "${NWX_VENV_SITE_PACKAGES}" NO_DEFAULT_PATH
+    )
+endif()
+if(TARGET gau2grid::gg)
+    set(_gd_target_gau2grid "gau2grid::gg")
+    set(_gd_uses_fc FALSE)
+    return()
+endif()
+
 FetchContent_Declare(
     gau2grid
     GIT_REPOSITORY https://github.com/psi4/gau2grid

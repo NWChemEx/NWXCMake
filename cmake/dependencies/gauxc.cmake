@@ -15,6 +15,29 @@
 include_guard()
 include(FetchContent)
 
+# If a previous build already installed gauxc into the active venv's
+# site-packages (NWX_VENV_SITE_PACKAGES, set by get_skbuild_python_path()),
+# reuse it instead of re-cloning and rebuilding GauXC (and its own
+# transitively-fetched ExchCXX/IntegratorXX/libxc) from source every time.
+# Scoped to exactly that directory (NO_DEFAULT_PATH) so this can never
+# accidentally match an unrelated system-wide install (e.g. Homebrew).
+if(NWX_VENV_SITE_PACKAGES)
+    # GauXC's own (unrelated, unscoped) internal find_package() calls for its
+    # own transitive deps can leave a stale/negative <Pkg>_DIR cache entry
+    # behind from an earlier point in this same configure; clear it first so
+    # our scoped lookup below always gets a fresh, authoritative search
+    # instead of silently reusing that unrelated result.
+    unset(gauxc_DIR CACHE)
+    find_package(gauxc CONFIG QUIET
+        PATHS "${NWX_VENV_SITE_PACKAGES}" NO_DEFAULT_PATH
+    )
+endif()
+if(TARGET gauxc::gauxc)
+    set(_gd_target_gauxc "gauxc::gauxc")
+    set(_gd_uses_fc FALSE)
+    return()
+endif()
+
 # GauXC builds a real library from its own CMakeLists. Turn off HDF5 before
 # add_subdirectory (CACHE FORCE so our value wins over its option() default,
 # policy CMP0077).
@@ -32,8 +55,13 @@ endif()
 # GauXC's own CMakeLists calls find_package(OpenMP REQUIRED) for both C and
 # CXX. AppleClang has no built-in OpenMP runtime, so FindOpenMP.cmake can't
 # find it there without explicit hints -- point it at Homebrew's libomp (the
-# standard workaround) when nothing has hinted OpenMP already.
-if(APPLE AND NOT DEFINED OpenMP_C_FLAGS AND NOT DEFINED OpenMP_CXX_FLAGS)
+# standard workaround) when nothing has hinted OpenMP already. Checked by
+# truthiness, not DEFINED: a prior failed find_package(OpenMP) in this same
+# build tree (e.g. from a nested FetchContent'd subproject) can leave
+# OpenMP_C_FLAGS cached as the literal string "NOTFOUND", which DEFINED
+# would count as "already hinted" and skip this block, permanently blocking
+# GauXC's own OpenMP detection on every later reconfigure.
+if(APPLE AND NOT OpenMP_C_FLAGS AND NOT OpenMP_CXX_FLAGS)
     find_program(_gd_brew_exe brew)
     if(_gd_brew_exe)
         execute_process(

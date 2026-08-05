@@ -2,16 +2,28 @@ include_guard()
 
 macro(get_skbuild_python_path)
     find_package(Python REQUIRED COMPONENTS Interpreter)
+    # scikit-build-core installs C++ artifacts (headers, libs, CMake package
+    # configs) under the platlib dir (.../lib/pythonX.Y/site-packages), not
+    # sys.prefix itself -- sys.prefix is one directory too shallow for
+    # find_package() to ever match anything installed there.
     execute_process(
-        COMMAND "${Python_EXECUTABLE}" -c "import sys; print(sys.prefix)"
-        OUTPUT_VARIABLE _tp_py_prefix
+        COMMAND "${Python_EXECUTABLE}" -c
+            "import sysconfig; print(sysconfig.get_path('platlib'))"
+        OUTPUT_VARIABLE _tp_py_platlib
         OUTPUT_STRIP_TRAILING_WHITESPACE
-        RESULT_VARIABLE _tp_sys_prefix_rc
+        RESULT_VARIABLE _tp_platlib_rc
     )
-    if(NOT _tp_sys_prefix_rc EQUAL 0)
-        message(FATAL_ERROR "Could not query sys.prefix from Python")
+    if(NOT _tp_platlib_rc EQUAL 0)
+        message(FATAL_ERROR "Could not query sysconfig.get_path('platlib') from Python")
     endif()
-    set(CMAKE_PREFIX_PATH "${_tp_py_prefix};${CMAKE_PREFIX_PATH}")
+    set(CMAKE_PREFIX_PATH "${_tp_py_platlib};${CMAKE_PREFIX_PATH}")
+    # Exposed separately (rather than relying on callers to re-derive it from
+    # CMAKE_PREFIX_PATH) so dependency lookups that want to search *only*
+    # this location -- not the rest of CMAKE_PREFIX_PATH's broader, unscoped
+    # system search path (Homebrew, /usr/local, ...), which can accidentally
+    # match an unrelated same-named package -- can pass it explicitly via
+    # PATHS ... NO_DEFAULT_PATH.
+    set(NWX_VENV_SITE_PACKAGES "${_tp_py_platlib}")
 endmacro()
 
 get_skbuild_python_path()
