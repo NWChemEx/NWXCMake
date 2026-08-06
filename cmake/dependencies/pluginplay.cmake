@@ -18,7 +18,7 @@ include(FetchContent)
 FetchContent_Declare(
     pluginplay
     GIT_REPOSITORY https://github.com/NWChemEx/PluginPlay
-    GIT_TAG        build_overhaul
+    GIT_TAG        master
 )
 
 if(SKBUILD)
