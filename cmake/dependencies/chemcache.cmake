@@ -18,7 +18,7 @@ include(FetchContent)
 FetchContent_Declare(
     chemcache
     GIT_REPOSITORY https://github.com/NWChemEx/ChemCache
-    GIT_TAG        build_overhaul
+    GIT_TAG        master
 )
 
 if(SKBUILD)
