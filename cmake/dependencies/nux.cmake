@@ -18,7 +18,7 @@ include(FetchContent)
 FetchContent_Declare(
     nux
     GIT_REPOSITORY https://github.com/NWChemEx/NUX
-    GIT_TAG        build_overhaul
+    GIT_TAG        master
 )
 
 if(SKBUILD)
