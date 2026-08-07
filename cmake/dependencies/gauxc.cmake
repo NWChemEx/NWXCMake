@@ -82,6 +82,35 @@ if(APPLE AND NOT OpenMP_C_FLAGS AND NOT OpenMP_CXX_FLAGS)
     unset(_gd_brew_exe CACHE)
 endif()
 
+# GauXC's vendored linalg-cmake-modules (github.com/wavefunction91/linalg-cmake-modules)
+# prepends "Accelerate" to BLAS_PREFERENCE_LIST on Darwin, so it always wins
+# over Homebrew's OpenBLAS -- even though CI installs openblas and points
+# CMAKE_PREFIX_PATH at it -- because Accelerate is a system framework that
+# links successfully with no hint needed. Accelerate is then linked via its
+# legacy vecLib/CLAPACK interface (no -DACCELERATE_NEW_LAPACK), which has
+# known ABI divergences from standard LAPACK for generalized-eigenvalue
+# routines (dsygv/zhegv) -- the confirmed cause of macOS-only segfaults in
+# SCF's eigensolver tests. Force OpenBLAS instead by excluding Accelerate from
+# the preference list; LAPACK follows automatically since OpenBLAS provides a
+# full LAPACK linker too (see FindLAPACK.cmake's BLAS_HAS_LAPACK check).
+if(APPLE AND NOT BLAS_PREFERENCE_LIST)
+    find_program(_gd_brew_exe brew)
+    if(_gd_brew_exe)
+        execute_process(
+            COMMAND "${_gd_brew_exe}" --prefix openblas
+            OUTPUT_VARIABLE _gd_openblas_prefix
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_QUIET
+        )
+    endif()
+    if(_gd_openblas_prefix)
+        list(APPEND CMAKE_PREFIX_PATH "${_gd_openblas_prefix}")
+    endif()
+    set(BLAS_PREFERENCE_LIST "OpenBLAS" CACHE STRING "" FORCE)
+    unset(_gd_openblas_prefix)
+    unset(_gd_brew_exe CACHE)
+endif()
+
 FetchContent_Declare(
     gauxc
     GIT_REPOSITORY https://github.com/wavefunction91/GauXC
