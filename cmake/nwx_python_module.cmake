@@ -39,6 +39,12 @@ function(nwx_python_module nwx_python_module_name nwx_python_src_dir)
     # pybind11 v3 builds extensions via python_add_library, which is provided by
     # the modern FindPython module's Development.Module component.
     find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
+    # DEPENDS may name an ecosystem dep (e.g. "parallelzone") whose real
+    # target is only known via NWX_DEP_TARGET_<name> -- it can be
+    # "nwx::parallelzone" (found via find_package against an installed
+    # wheel) rather than the bare short name (FetchContent'd in-tree).
+    include(nwx_library)
+    _nwx_resolve_dep_names(npm_DEPENDS ${npm_DEPENDS})
     file(
         GLOB_RECURSE __nwx_python_module_source_files
         CONFIGURE_DEPENDS ${nwx_python_src_dir}/*.cpp

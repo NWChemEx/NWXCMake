@@ -13,16 +13,6 @@
 # limitations under the License.
 
 include_guard()
-include(FetchContent)
+include(nwx_ecosystem_dependency)
 
-FetchContent_Declare(
-    nux
-    GIT_REPOSITORY https://github.com/NWChemEx/NUX
-    GIT_TAG        master
-)
-
-if(SKBUILD)
-    list(APPEND _gd_targets nwx::nux)
-else()
-    list(APPEND _gd_targets nux)
-endif()
+nwx_ecosystem_dependency(nux https://github.com/NWChemEx/NUX)

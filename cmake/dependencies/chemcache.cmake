@@ -13,16 +13,6 @@
 # limitations under the License.
 
 include_guard()
-include(FetchContent)
+include(nwx_ecosystem_dependency)
 
-FetchContent_Declare(
-    chemcache
-    GIT_REPOSITORY https://github.com/NWChemEx/ChemCache
-    GIT_TAG        master
-)
-
-if(SKBUILD)
-    list(APPEND _gd_targets nwx::chemcache)
-else()
-    list(APPEND _gd_targets chemcache)
-endif()
+nwx_ecosystem_dependency(chemcache https://github.com/NWChemEx/ChemCache)

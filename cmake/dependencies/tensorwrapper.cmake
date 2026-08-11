@@ -13,16 +13,6 @@
 # limitations under the License.
 
 include_guard()
-include(FetchContent)
+include(nwx_ecosystem_dependency)
 
-FetchContent_Declare(
-    tensorwrapper
-    GIT_REPOSITORY https://github.com/NWChemEx/TensorWrapper
-    GIT_TAG        master
-)
-
-if(SKBUILD)
-    list(APPEND _gd_targets nwx::tensorwrapper)
-else()
-    list(APPEND _gd_targets tensorwrapper)
-endif()
+nwx_ecosystem_dependency(tensorwrapper https://github.com/NWChemEx/TensorWrapper)

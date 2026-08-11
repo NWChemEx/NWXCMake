@@ -13,16 +13,6 @@
 # limitations under the License.
 
 include_guard()
-include(FetchContent)
+include(nwx_ecosystem_dependency)
 
-FetchContent_Declare(
-    pluginplay
-    GIT_REPOSITORY https://github.com/NWChemEx/PluginPlay
-    GIT_TAG        master
-)
-
-if(SKBUILD)
-    list(APPEND _gd_targets nwx::pluginplay)
-else()
-    list(APPEND _gd_targets pluginplay)
-endif()
+nwx_ecosystem_dependency(pluginplay https://github.com/NWChemEx/PluginPlay)

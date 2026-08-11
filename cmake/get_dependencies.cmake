@@ -18,9 +18,12 @@ include(FetchContent)
 function(get_dependencies)
     set(_gd_targets)
     set(_gd_fc_names)
-    if(SKBUILD)
-        include(dependencies/skbuild_python)
-    endif()
+    # Populate NWX_VENV_SITE_PACKAGES/CMAKE_PREFIX_PATH from the ambient
+    # Python's site-packages unconditionally (not just when scikit-build-core
+    # itself is driving the build via SKBUILD) so find_package() below can
+    # locate a pip-installed nwchemex-* wheel even during a plain, ambient
+    # `cmake -Bbuild` configure (e.g. the CI cmake_build action).
+    include(dependencies/skbuild_python)
 
     # Dependencies found via find_package() below (gauxc, libxc, gau2grid,
     # ...) must only ever resolve against CMAKE_PREFIX_PATH (the active
