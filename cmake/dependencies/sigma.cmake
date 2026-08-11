@@ -15,6 +15,28 @@
 include_guard()
 include(FetchContent)
 
+# sigma (and the CMaize/CMakePP-Lang machinery it pulls in) is still on an
+# older cmake_minimum_required(), so its dev warnings for policies introduced
+# since then would otherwise leak into every project that fetches sigma
+# through NWXCMake. Rather than patch sigma/CMaize's own CMakeLists.txt (not
+# ours to maintain), set the CMAKE_POLICY_DEFAULT_CMP<NNNN> variables here:
+# CMake reads these as the default for any policy a subdirectory leaves
+# unset, and -- because this is a plain set() in an include()'d file rather
+# than a function(), not a CACHE variable -- the value lives in
+# get_dependencies()'s call scope and is inherited by every add_subdirectory()
+# nested underneath it (sigma's own, CMaize's, cmakepp_lang's, ...).
+#
+# CMP0167 (FindBoost module removed): NEW is the forward-looking choice --
+# Boost >= 1.70 ships its own BoostConfig.cmake, which is what actually
+# resolves find_package(Boost) here regardless of this policy's setting.
+set(CMAKE_POLICY_DEFAULT_CMP0167 NEW)
+# CMP0152 (file(REAL_PATH) resolves symlinks before collapsing ../): OLD
+# matches CMake's pre-existing behavior, which is what this vendored tree has
+# always been exercised against -- switching to NEW changes the resolved
+# install paths CMaize computes, unverified territory we don't need to enter
+# just to silence a warning.
+set(CMAKE_POLICY_DEFAULT_CMP0152 OLD)
+
 # sigma is still on its own CMaize-based build (not yet migrated to the
 # NWXCMake pipify pattern the rest of the ecosystem uses), so this pulls it
 # in as a subdirectory the same way wtf.cmake does for its already-migrated
