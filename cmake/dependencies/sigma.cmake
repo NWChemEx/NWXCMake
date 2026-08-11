@@ -69,7 +69,7 @@ unset(_sigma_bt_backup)
 FetchContent_Declare(
     sigma
     GIT_REPOSITORY https://github.com/QCUncertainty/sigma
-    GIT_TAG        taylor2
+    GIT_TAG        main
 )
 
 set(ENABLE_EIGEN_SUPPORT ON CACHE BOOL "Include Eigen compatibility headers?")
