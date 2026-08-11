@@ -126,5 +126,23 @@ FetchContent_MakeAvailable(gauxc)
 set(BUILD_TESTING "${_gd_bt_backup}" CACHE BOOL "" FORCE)
 unset(_gd_bt_backup)
 
+# GauXC and its transitively-fetched ExchCXX unconditionally add -Wall
+# -Wextra -Wpedantic -Wnon-virtual-dtor -Wshadow as PRIVATE compile options
+# to their own sources (gauxc-src/src/CMakeLists.txt,
+# exchcxx-src/src/CMakeLists.txt), with no option() to opt out. That floods
+# the build log with warnings from code we don't maintain. Append -w after
+# their own flags on each target: it's added later, so for GCC/Clang/
+# AppleClang it wins over their earlier -W* flags and silences the noise
+# for just these two targets' own compilation -- everything else (including
+# SCF's own code, since these are PRIVATE and don't propagate) is unaffected.
+foreach(_gd_noisy_target gauxc exchcxx)
+    if(TARGET ${_gd_noisy_target})
+        target_compile_options(${_gd_noisy_target} PRIVATE
+            $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CXX_COMPILER_ID:GNU,Clang,AppleClang>>:-w>
+        )
+    endif()
+endforeach()
+unset(_gd_noisy_target)
+
 set(_gd_target_gauxc "gauxc::gauxc")
 set(_gd_uses_fc FALSE)

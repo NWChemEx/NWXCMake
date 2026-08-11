@@ -37,6 +37,37 @@ if(TARGET gau2grid::gg)
     return()
 endif()
 
+# gau2grid's own CMakeLists only requests `COMPONENTS Interpreter` (no
+# NumPy component) and never checks numpy is importable before wiring its
+# code generator up as a build-time add_custom_command. That means a plain
+# find_package(Python) can silently resolve to an interpreter without numpy
+# (e.g. the first one on PATH), and the failure only surfaces later, deep in
+# a custom command, as a raw Python traceback. Resolve and validate the
+# interpreter here instead, mirroring skbuild_python.cmake's FATAL_ERROR
+# pattern, so a missing numpy is a clear configure-time error.
+find_package(Python 3.6 REQUIRED COMPONENTS Interpreter)
+execute_process(
+    COMMAND "${Python_EXECUTABLE}" -c "import numpy"
+    RESULT_VARIABLE _gd_numpy_rc
+    OUTPUT_QUIET
+    ERROR_QUIET
+)
+if(NOT _gd_numpy_rc EQUAL 0)
+    message(FATAL_ERROR
+        "gau2grid's code generator requires numpy, but it is not "
+        "importable in the detected Python interpreter "
+        "(${Python_EXECUTABLE}). Install it there, e.g.:\n"
+        "    ${Python_EXECUTABLE} -m pip install numpy\n"
+        "or point CMake at a different interpreter with "
+        "-DPython_EXECUTABLE=/path/to/python."
+    )
+endif()
+unset(_gd_numpy_rc)
+
+# Pin gau2grid's own find_package(Python) to the exact interpreter just
+# validated above, so it can't silently re-resolve to a different one.
+set(Python_EXECUTABLE "${Python_EXECUTABLE}" CACHE FILEPATH "" FORCE)
+
 FetchContent_Declare(
     gau2grid
     GIT_REPOSITORY https://github.com/psi4/gau2grid
