@@ -13,16 +13,6 @@
 # limitations under the License.
 
 include_guard()
-include(FetchContent)
+include(nwx_ecosystem_dependency)
 
-FetchContent_Declare(
-    parallelzone
-    GIT_REPOSITORY https://github.com/NWChemEx/ParallelZone
-    GIT_TAG        master
-)
-
-if(SKBUILD)
-    list(APPEND _gd_targets nwx::parallelzone)
-else()
-    list(APPEND _gd_targets parallelzone)
-endif()
+nwx_ecosystem_dependency(parallelzone https://github.com/NWChemEx/ParallelZone)

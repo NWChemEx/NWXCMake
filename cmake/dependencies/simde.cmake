@@ -13,16 +13,6 @@
 # limitations under the License.
 
 include_guard()
-include(FetchContent)
+include(nwx_ecosystem_dependency)
 
-FetchContent_Declare(
-    simde
-    GIT_REPOSITORY https://github.com/NWChemEx/SimDE
-    GIT_TAG        master
-)
-
-if(SKBUILD)
-    list(APPEND _gd_targets nwx::simde)
-else()
-    list(APPEND _gd_targets simde)
-endif()
+nwx_ecosystem_dependency(simde https://github.com/NWChemEx/SimDE)

@@ -13,16 +13,6 @@
 # limitations under the License.
 
 include_guard()
-include(FetchContent)
+include(nwx_ecosystem_dependency)
 
-FetchContent_Declare(
-    utilities
-    GIT_REPOSITORY https://github.com/NWChemEx/Utilities
-    GIT_TAG        master
-)
-
-if(SKBUILD)
-    list(APPEND _gd_targets nwx::utilities)
-else()
-    list(APPEND _gd_targets utilities)
-endif()
+nwx_ecosystem_dependency(utilities https://github.com/NWChemEx/Utilities)

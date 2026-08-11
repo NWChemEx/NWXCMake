@@ -54,6 +54,13 @@ function(nwx_library nl_project_name nl_inc_dir nl_src_dir)
     # nl_TYPE                = library type forwarded to add_library()
     # nl_NO_INSTALL          = skip install_library()
 
+    # Positional ecosystem deps must also be resolved: now that
+    # get_dependencies() can satisfy a dep via find_package() against an
+    # installed wheel instead of FetchContent, its real target is
+    # "nwx::<name>", not the bare short name -- so this can no longer assume
+    # short name == target name the way it could when every dep was
+    # unconditionally FetchContent'd in-tree.
+    _nwx_resolve_dep_names(_nl_eco       ${nl_UNPARSED_ARGUMENTS})
     _nwx_resolve_dep_names(_nl_pub_extra ${nl_PUBLIC})
     _nwx_resolve_dep_names(_nl_priv      ${nl_PRIVATE})
 
@@ -67,7 +74,7 @@ function(nwx_library nl_project_name nl_inc_dir nl_src_dir)
     if(__nl_source_files)
         add_library(${nl_project_name} ${nl_TYPE} ${__nl_source_files})
         target_link_libraries(${nl_project_name}
-            PUBLIC  ${nl_UNPARSED_ARGUMENTS} ${_nl_pub_extra}
+            PUBLIC  ${_nl_eco} ${_nl_pub_extra}
             PRIVATE ${_nl_priv}
         )
         target_include_directories(${nl_project_name}
@@ -103,7 +110,7 @@ function(nwx_library nl_project_name nl_inc_dir nl_src_dir)
         # dropped (the library has no TUs to compile against them).
         add_library(${nl_project_name} INTERFACE)
         target_link_libraries(${nl_project_name}
-            INTERFACE ${nl_UNPARSED_ARGUMENTS} ${_nl_pub_extra}
+            INTERFACE ${_nl_eco} ${_nl_pub_extra}
         )
         target_include_directories(${nl_project_name}
             INTERFACE

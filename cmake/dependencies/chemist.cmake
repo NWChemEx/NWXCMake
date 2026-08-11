@@ -13,16 +13,6 @@
 # limitations under the License.
 
 include_guard()
-include(FetchContent)
+include(nwx_ecosystem_dependency)
 
-FetchContent_Declare(
-    chemist
-    GIT_REPOSITORY https://github.com/NWChemEx/Chemist
-    GIT_TAG        master
-)
-
-if(SKBUILD)
-    list(APPEND _gd_targets nwx::chemist)
-else()
-    list(APPEND _gd_targets chemist)
-endif()
+nwx_ecosystem_dependency(chemist https://github.com/NWChemEx/Chemist)

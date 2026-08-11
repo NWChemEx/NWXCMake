@@ -13,16 +13,6 @@
 # limitations under the License.
 
 include_guard()
-include(FetchContent)
+include(nwx_ecosystem_dependency)
 
-FetchContent_Declare(
-    scf
-    GIT_REPOSITORY https://github.com/NWChemEx/SCF
-    GIT_TAG        master
-)
-
-if(SKBUILD)
-    list(APPEND _gd_targets nwx::scf)
-else()
-    list(APPEND _gd_targets scf)
-endif()
+nwx_ecosystem_dependency(scf https://github.com/NWChemEx/SCF)

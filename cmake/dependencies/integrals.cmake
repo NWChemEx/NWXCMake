@@ -13,16 +13,6 @@
 # limitations under the License.
 
 include_guard()
-include(FetchContent)
+include(nwx_ecosystem_dependency)
 
-FetchContent_Declare(
-    integrals
-    GIT_REPOSITORY https://github.com/NWChemEx/Integrals
-    GIT_TAG        master
-)
-
-if(SKBUILD)
-    list(APPEND _gd_targets nwx::integrals)
-else()
-    list(APPEND _gd_targets integrals)
-endif()
+nwx_ecosystem_dependency(integrals https://github.com/NWChemEx/Integrals)
