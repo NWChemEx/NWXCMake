@@ -20,15 +20,21 @@
 # (wheel) install bundles a copy of cmake/ inside the package.
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
 name = "nwchemex-nwxcmake"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Shared NWChemEx CMake modules, discoverable from Python"
 license = { text = "Apache-2.0" }
 requires-python = ">=3.8"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.version.raw-options]
+fallback_version = "0.0.0"
 
 [tool.hatch.build.targets.wheel]
 # The importable Python package lives under python/nwxcmake ...
