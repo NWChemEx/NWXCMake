@@ -26,7 +26,17 @@ FetchContent_Declare(
 )
 FetchContent_GetProperties(eigen)
 if(NOT eigen_POPULATED)
+    # FetchContent_MakeAvailable() would run Eigen's CMakeLists.txt via
+    # add_subdirectory(), which is exactly what we're avoiding above, so we
+    # keep using the lower-level populate-only call. CMake >= 3.30 deprecates
+    # calling it directly, so pin CMP0169 to OLD in this scope to silence the
+    # warning without affecting the rest of the build.
+    cmake_policy(PUSH)
+    if(POLICY CMP0169)
+        cmake_policy(SET CMP0169 OLD)
+    endif()
     FetchContent_Populate(eigen)
+    cmake_policy(POP)
 endif()
 
 # Expose a proper IMPORTED INTERFACE target. IMPORTED targets are never
