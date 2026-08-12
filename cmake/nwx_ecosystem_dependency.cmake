@@ -52,6 +52,17 @@ macro(nwx_ecosystem_dependency ned_name ned_git_repository)
         list(APPEND _gd_targets nwx::${ned_name})
         set(_gd_uses_fc FALSE)
         return()
+    elseif(TARGET ${ned_name})
+        # ${ned_name} is already a real target -- e.g. this repo is the
+        # top-level project (built via nwx_library(), which defines the bare
+        # name, not an nwx:: alias) and is also, transitively, its own
+        # ecosystem dependency (INTEGRATION_TESTING pulling in a superproject
+        # that depends back on this repo). Re-fetching would redefine the
+        # same target and fail with a duplicate-target CMake error.
+        set(_gd_target_${ned_name} "${ned_name}")
+        list(APPEND _gd_targets ${ned_name})
+        set(_gd_uses_fc FALSE)
+        return()
     endif()
 
     FetchContent_Declare(
