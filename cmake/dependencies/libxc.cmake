@@ -52,6 +52,25 @@ FetchContent_MakeAvailable(libxc)
 set(BUILD_TESTING "${_gd_bt_backup}" CACHE BOOL "" FORCE)
 unset(_gd_bt_backup)
 
+# Skip ccache for libxc specifically. A ccache entry for one of its object
+# files was found corrupted/truncated (from a prior cancelled or OOM-killed
+# CI run, most likely) and served as a false hit, producing a binary that
+# built and linked cleanly but crashed with SIGILL at runtime deep inside a
+# libxc functional evaluation -- reproduced, and confirmed fixed by manually
+# clearing the ccache entry, on NWChemEx/SCF#70. libxc's own build is fast
+# (a few seconds) and FetchContent already caches its source checkout
+# separately, so losing ccache's object-level reuse here is cheap insurance
+# against that class of bug recurring silently.
+foreach(_lxc_target xc xcf03)
+    if(TARGET ${_lxc_target})
+        set_target_properties(${_lxc_target} PROPERTIES
+            C_COMPILER_LAUNCHER ""
+            CXX_COMPILER_LAUNCHER ""
+        )
+    endif()
+endforeach()
+unset(_lxc_target)
+
 # libxc's CMakeLists only defines the plain "xc" target; "Libxc::xc" is an
 # imported-target alias created by its install(EXPORT) rule, which doesn't
 # exist for an in-tree FetchContent build (same situation as gau2grid's "gg").
