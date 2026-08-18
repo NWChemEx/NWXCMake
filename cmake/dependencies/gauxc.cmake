@@ -15,12 +15,26 @@
 include_guard()
 include(FetchContent)
 
-# If a previous build already installed gauxc into the active venv's
+# Resolution order: (1) a pre-installed copy reachable via the caller's own
+# CMAKE_PREFIX_PATH (e.g. a hand-built or system-package GauXC), (2) a
+# previous build's copy already installed into the active venv's
 # site-packages (NWX_VENV_SITE_PACKAGES, set by get_skbuild_python_path()),
-# reuse it instead of re-cloning and rebuilding GauXC (and its own
-# transitively-fetched ExchCXX/IntegratorXX/libxc) from source every time.
-# Scoped to exactly that directory (NO_DEFAULT_PATH) so this can never
-# accidentally match an unrelated system-wide install (e.g. Homebrew).
+# (3) fetch and build from source. CMAKE_FIND_PACKAGE_NO_PACKAGE_REGISTRY is
+# already forced ON globally (get_dependencies.cmake), so step (1) can't
+# resolve against a stale ~/.cmake/packages entry -- only CMAKE_PREFIX_PATH
+# and the normal default search locations.
+find_package(gauxc CONFIG QUIET)
+if(TARGET gauxc::gauxc)
+    set(_gd_target_gauxc "gauxc::gauxc")
+    set(_gd_uses_fc FALSE)
+    return()
+endif()
+
+# Step (2): reuse a previous build's copy instead of re-cloning and
+# rebuilding GauXC (and its own transitively-fetched ExchCXX/IntegratorXX/
+# libxc) from source every time. Scoped to exactly that directory
+# (NO_DEFAULT_PATH) so this can never accidentally match an unrelated
+# system-wide install (e.g. Homebrew).
 if(NWX_VENV_SITE_PACKAGES)
     # GauXC's own (unrelated, unscoped) internal find_package() calls for its
     # own transitive deps can leave a stale/negative <Pkg>_DIR cache entry
