@@ -15,6 +15,21 @@
 include_guard()
 include(FetchContent)
 
+# Reuse a pre-installed copy reachable via the caller's own CMAKE_PREFIX_PATH
+# (e.g. a hand-built or system-package libint2) instead of fetching and
+# building from source. CMAKE_FIND_PACKAGE_NO_PACKAGE_REGISTRY is already
+# forced ON globally (get_dependencies.cmake), so this can't resolve against
+# a stale ~/.cmake/packages entry -- only CMAKE_PREFIX_PATH and the normal
+# default search locations. Unlike gauxc/libxc/gau2grid, libint2 isn't
+# pip-installed into the venv by this ecosystem, so there's no second,
+# venv-scoped attempt to make here.
+find_package(Libint2 CONFIG QUIET)
+if(TARGET Libint2::int2)
+    set(_gd_target_libint2 "Libint2::int2")
+    set(_gd_uses_fc FALSE)
+    return()
+endif()
+
 # Libint2 builds a real (compiled) library from its own CMakeLists. Disable the
 # parts we don't use before add_subdirectory. CACHE FORCE so our values win over
 # the subproject's option() defaults (policy CMP0077).
