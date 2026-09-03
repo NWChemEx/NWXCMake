@@ -22,7 +22,8 @@ include_guard()
 include(CTest)
 
 # catch2_tests_from_dir(target dir [link_lib ...]
-#     [PRIVATE_INCLUDES path ...])
+#     [PRIVATE_INCLUDES path ...]
+#     [EXCLUDE_REGEX regex])
 #
 # Builds a Catch2 test executable from all *.cpp files under <dir>, links it
 # against Catch2::Catch2WithMain and any additional <link_lib>s, registers it
@@ -38,19 +39,31 @@ include(CTest)
 #
 #   catch2_tests_from_dir(unit_test_foo tests/cxx/unit_tests foo
 #       PRIVATE_INCLUDES cxx/src)
+#
+# EXCLUDE_REGEX drops any matching file from the glob (list(FILTER ...
+# EXCLUDE REGEX) semantics) before it's compiled. Use this when a subtree of
+# <dir> unconditionally #includes headers from a dependency that a caller
+# has conditionally disabled and therefore cannot compile against:
+#
+#   catch2_tests_from_dir(unit_test_foo tests/cxx/unit_tests foo
+#       EXCLUDE_REGEX ".*/xc/gauxc/.*\\.cpp$")
 function(catch2_tests_from_dir ctfd_target_name ctfd_dir)
     if(NOT BUILD_TESTING)
         return()
     endif()
 
-    cmake_parse_arguments(ctfd "" "" "PRIVATE_INCLUDES" ${ARGN})
+    cmake_parse_arguments(ctfd "" "EXCLUDE_REGEX" "PRIVATE_INCLUDES" ${ARGN})
     # ctfd_UNPARSED_ARGUMENTS = link libraries
     # ctfd_PRIVATE_INCLUDES   = extra private include dirs
+    # ctfd_EXCLUDE_REGEX      = optional regex of files to drop from the glob
 
     include(get_dependencies)
     get_dependencies(catch2)
 
     file(GLOB_RECURSE ctfd_test_files CONFIGURE_DEPENDS ${ctfd_dir}/*.cpp)
+    if(ctfd_EXCLUDE_REGEX)
+        list(FILTER ctfd_test_files EXCLUDE REGEX "${ctfd_EXCLUDE_REGEX}")
+    endif()
 
     add_executable(${ctfd_target_name} ${ctfd_test_files})
 
