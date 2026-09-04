@@ -85,6 +85,27 @@ foreach(_lxc_target xc xcf03)
 endforeach()
 unset(_lxc_target)
 
+# libxc's own CMakeLists only wires its generated headers (xc.h, written to
+# ${PROJECT_BINARY_DIR}/src/; xc_version.h/config.h, written to
+# ${PROJECT_BINARY_DIR}/) onto its *directory-scoped* include_directories(),
+# and only publishes an INSTALL_INTERFACE (no BUILD_INTERFACE) on the "xc"
+# target itself -- fine for a find_package(Libxc CONFIG)-imported
+# "Libxc::xc", but for an in-tree FetchContent build the plain "xc" target
+# carries no build-tree include path at all, so any consumer outside
+# libxc's own CMakeLists (e.g. SCF's target_link_libraries(scf PRIVATE xc))
+# fails with "xc.h: file not found" -- reproduced on NWChemEx/SCF#71's CI
+# (a from-scratch build with no pre-existing libxc install anywhere to mask
+# it). Add the missing BUILD_INTERFACE dirs ourselves, matching libxc's own
+# include_directories() call exactly (src/ for xc_funcs*.h, ${...}_BINARY_DIR/src
+# for the generated xc.h, and ${...}_BINARY_DIR for xc_version.h/config.h).
+if(TARGET xc)
+    target_include_directories(xc INTERFACE
+        $<BUILD_INTERFACE:${libxc_SOURCE_DIR}/src>
+        $<BUILD_INTERFACE:${libxc_BINARY_DIR}/src>
+        $<BUILD_INTERFACE:${libxc_BINARY_DIR}>
+    )
+endif()
+
 # libxc's CMakeLists only defines the plain "xc" target; "Libxc::xc" is an
 # imported-target alias created by its install(EXPORT) rule, which doesn't
 # exist for an in-tree FetchContent build (same situation as gau2grid's "gg").
