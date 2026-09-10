@@ -14,6 +14,7 @@
 
 include_guard()
 include(FetchContent)
+include(nwx_ecosystem_dependency)
 
 # Resolution order: (1) a pre-installed copy reachable via the caller's own
 # CMAKE_PREFIX_PATH (e.g. a hand-built or system-package GauXC), (2) a
@@ -125,11 +126,19 @@ if(APPLE AND NOT BLAS_PREFERENCE_LIST)
     unset(_gd_brew_exe CACHE)
 endif()
 
-FetchContent_Declare(
-    gauxc
-    GIT_REPOSITORY https://github.com/wavefunction91/GauXC
-    GIT_TAG        71008cffd5d13d5ee813fb13d14d8bf7b06b8f6e
-)
+# A local checkout (FETCHCONTENT_SOURCE_DIR_GAUXC) takes priority over the
+# pinned commit -- see nwx_ecosystem_dependency.cmake.
+nwx_local_source_override(gauxc _gauxc_local_dir)
+if(_gauxc_local_dir)
+    FetchContent_Declare(gauxc SOURCE_DIR "${_gauxc_local_dir}")
+else()
+    FetchContent_Declare(
+        gauxc
+        GIT_REPOSITORY https://github.com/wavefunction91/GauXC
+        GIT_TAG        71008cffd5d13d5ee813fb13d14d8bf7b06b8f6e
+    )
+endif()
+unset(_gauxc_local_dir)
 
 # Drive MakeAvailable here (instead of letting get_dependencies batch it) so we
 # can build the subproject with tests off without leaving the parent project's
