@@ -18,8 +18,8 @@ include(FetchContent)
 #[[[
 # Resolves a local-source-directory override for a dependency.
 #
-# This function wraps the logic of getting ``FETCHCONTENT_SOURCE_DIR_<NAME>`` 
-# and checking that it is a directory (if it was set).  This function can be 
+# This function wraps the logic of getting ``FETCHCONTENT_SOURCE_DIR_<NAME>``
+# and checking that it is a directory (if it was set).  This function can be
 # extended to support other override mechanisms in the future.
 #
 # :param nlso_name: Dependency name as spelled in ``dependencies/<name>.cmake``.
@@ -57,8 +57,8 @@ endfunction()
 #    ecosystem (including an old version of itself), and since we want to test
 #.   the local version, this repo's copy has to lose.  This branch must come
 #.   first to ensure we always use the local copy of the top-level repo.
-# 2. **Already resolved.**  This branch is triggered when an earlier 
-#    ``get_dependencies()`` call in this same configuration already produced a 
+# 2. **Already resolved.**  This branch is triggered when an earlier
+#    ``get_dependencies()`` call in this same configuration already produced a
 #    target for ``<name>``.
 # 3. **A local source directory**, via ``FETCHCONTENT_SOURCE_DIR_<NAME>`` --
 #    see :cmake:command:`nwx_local_source_override`.  For developing against
@@ -133,9 +133,9 @@ macro(nwx_ecosystem_dependency ned_name ned_git_repository)
 
     # (4) An installed wheel.
     # ``unset(<name>_DIR CACHE)`` ensures this runs every time it's called. If
-    # we had already found the package in a previous call to 
-    # ``nwx_ecosystem_dependency()``, then branch 2 would have triggered, i.e., 
-    # if ``<name>_DIR`` is set it is stale. 
+    # we had already found the package in a previous call to
+    # ``nwx_ecosystem_dependency()``, then branch 2 would have triggered, i.e.,
+    # if ``<name>_DIR`` is set it is stale.
     if(NWX_VENV_SITE_PACKAGES AND NOT NWX_ECOSYSTEM_FROM_SOURCE)
         unset(${ned_name}_DIR CACHE)
         find_package(${ned_name} CONFIG QUIET

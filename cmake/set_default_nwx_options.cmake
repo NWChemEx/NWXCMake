@@ -42,7 +42,7 @@ include_guard()
 # Cache variables set
 # -------------------
 # - ``NWX_TOP_PROJECT_NAME`` — the name of the top-level project.  This is a
-    work around to avoid requiring a higher version of CMake (3.21+) that has 
+    work around to avoid requiring a higher version of CMake (3.21+) that has
     the ``PROJECT_IS_TOP_LEVEL`` variable.
 #
 # Example usage:
@@ -64,10 +64,10 @@ option(NWX_ECOSYSTEM_FROM_SOURCE
        OFF
 )
 
-# The top-level project's name is recorded so nwx_ecosystem_dependency() can 
-# refuse to resolve that one dependency from anywhere but this working tree -- 
+# The top-level project's name is recorded so nwx_ecosystem_dependency() can
+# refuse to resolve that one dependency from anywhere but this working tree --
 # the "self-override rule" (see
-# https://nwchemex.github.io/author/testing/integration/). Without this, an 
+# https://nwchemex.github.io/author/testing/integration/). Without this, an
 # integration-testing build
 # that has the ecosystem's wheels installed would resolve the top-level repo
 # to its own *published* copy and silently test the wrong code.
