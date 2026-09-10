@@ -136,12 +136,25 @@ macro(nwx_ecosystem_dependency ned_name ned_git_repository)
     # we had already found the package in a previous call to
     # ``nwx_ecosystem_dependency()``, then branch 2 would have triggered, i.e.,
     # if ``<name>_DIR`` is set it is stale.
+    #
+    # The success check requires ``${ned_name}_FOUND`` in addition to
+    # ``TARGET nwx::${ned_name}``: the generated ``<name>Targets.cmake``
+    # unconditionally defines ``nwx::<name>`` as an IMPORTED target even when
+    # one of ITS OWN transitively-linked dependencies isn't resolvable yet
+    # (e.g. it links against ``nwx::scf``, but ``scf`` is the 
+    # top-level project, so only a bare ``scf`` target exists, not
+    # ``nwx::scf``) -- CMake's own install(EXPORT) boilerplate detects that
+    # and sets ``<name>_FOUND FALSE``, but leaves the half-broken IMPORTED
+    # target in place regardless. Checking only ``TARGET nwx::${ned_name}``
+    # would treat that as a successful resolution and defer a confusing
+    # link-time "target nwx::scf not defined" error instead of falling
+    # through to branch 5.
     if(NWX_VENV_SITE_PACKAGES AND NOT NWX_ECOSYSTEM_FROM_SOURCE)
         unset(${ned_name}_DIR CACHE)
         find_package(${ned_name} CONFIG QUIET
             PATHS "${NWX_VENV_SITE_PACKAGES}" NO_DEFAULT_PATH
         )
-        if(TARGET nwx::${ned_name})
+        if(TARGET nwx::${ned_name} AND ${ned_name}_FOUND)
             message(STATUS
                 "  ${ned_name}: installed wheel (${${ned_name}_DIR})"
             )
