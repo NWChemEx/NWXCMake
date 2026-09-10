@@ -36,6 +36,8 @@ include_guard()
 # - ``INTEGRATION_TESTING``     (default ``OFF``) — build integration tests
 # - ``DEVELOPER_SETUP``         (default ``OFF``) — wire up the shared
 #   pre-commit hooks for local development (see nwx_setup_pre_commit)
+# - ``ENABLE_XHOST``            (default ``ON``)  — let dependencies tune
+#   themselves to the building machine's CPU
 # - ``NWX_ECOSYSTEM_FROM_SOURCE`` (default ``OFF``) — resolve every NWChemEx
 #   ecosystem dependency from git instead of from an installed wheel
 #
@@ -59,6 +61,22 @@ option(BUILD_PYBIND11_BINDINGS "Build Python bindings via pybind11"     ON)
 option(INTEGRATION_TESTING     "Should we build the integration tests?" OFF)
 option(ENABLE_SIGMA            "Enable Sigma for uncertainty tracking"  OFF)
 option(DEVELOPER_SETUP         "Wire up local dev tooling (pre-commit)" OFF)
+
+# Deliberately un-prefixed: ENABLE_XHOST is the exact variable gau2grid,
+# libxc, and GauXC's vendored copy of gau2grid each declare (with their own
+# ON default) to gate "-march=native"/"-xHost". Declaring it here -- this
+# file is included right after project(), long before get_dependencies()
+# fetches anything -- creates the cache entry first, so their own option()
+# calls become no-ops and this one value governs all of them at once. 
+#
+# ON is right for a build that runs on the machine that produced it, and
+# wrong for anything redistributed or compiled through a shared cache,
+# because the emitted instruction set then depends on the builder's CPU. A
+# wheel built on an AVX-512 host raises SIGILL on a user without it, and
+# ccache cannot tell the two builds apart -- it hashes the flag *text*, not
+# the ISA "native" resolves to, so a cache shared across machines happily
+# serves one CPU's objects to another.
+option(ENABLE_XHOST            "Tune dependencies for this machine's CPU" ON)
 option(NWX_ECOSYSTEM_FROM_SOURCE
        "Ignore installed ecosystem wheels; build every ecosystem dep from git"
        OFF
