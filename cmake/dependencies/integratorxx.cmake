@@ -14,6 +14,7 @@
 
 include_guard()
 include(FetchContent)
+include(nwx_ecosystem_dependency)
 
 # This fetches ryanmrichard/IntegratorXX -- a fork of upstream
 # (wavefunction91) IntegratorXX with a reorganized header layout (e.g.
@@ -60,12 +61,20 @@ if(TARGET IntegratorXX::IntegratorXX)
     return()
 endif()
 
-FetchContent_Declare(
-    integratorxx
-    GIT_REPOSITORY https://github.com/ryanmrichard/IntegratorXX.git
-    GIT_TAG        master
-    GIT_SUBMODULES ""
-)
+# A local checkout (FETCHCONTENT_SOURCE_DIR_INTEGRATORXX) takes priority
+# over the fork's master branch -- see nwx_ecosystem_dependency.cmake.
+nwx_local_source_override(integratorxx _integratorxx_local_dir)
+if(_integratorxx_local_dir)
+    FetchContent_Declare(integratorxx SOURCE_DIR "${_integratorxx_local_dir}")
+else()
+    FetchContent_Declare(
+        integratorxx
+        GIT_REPOSITORY https://github.com/ryanmrichard/IntegratorXX.git
+        GIT_TAG        master
+        GIT_SUBMODULES ""
+    )
+endif()
+unset(_integratorxx_local_dir)
 
 # Drive MakeAvailable here (instead of letting get_dependencies batch it) so we
 # can build with tests off without leaving the parent project's BUILD_TESTING

@@ -36,6 +36,14 @@ include_guard()
 # - ``INTEGRATION_TESTING``     (default ``OFF``) — build integration tests
 # - ``DEVELOPER_SETUP``         (default ``OFF``) — wire up the shared
 #   pre-commit hooks for local development (see nwx_setup_pre_commit)
+# - ``NWX_ECOSYSTEM_FROM_SOURCE`` (default ``OFF``) — resolve every NWChemEx
+#   ecosystem dependency from git instead of from an installed wheel
+#
+# Cache variables set
+# -------------------
+# - ``NWX_TOP_PROJECT_NAME`` — the name of the top-level project.  This is a
+    work around to avoid requiring a higher version of CMake (3.21+) that has 
+    the ``PROJECT_IS_TOP_LEVEL`` variable.
 #
 # Example usage:
 #
@@ -51,6 +59,29 @@ option(BUILD_PYBIND11_BINDINGS "Build Python bindings via pybind11"     ON)
 option(INTEGRATION_TESTING     "Should we build the integration tests?" OFF)
 option(ENABLE_SIGMA            "Enable Sigma for uncertainty tracking"  OFF)
 option(DEVELOPER_SETUP         "Wire up local dev tooling (pre-commit)" OFF)
+option(NWX_ECOSYSTEM_FROM_SOURCE
+       "Ignore installed ecosystem wheels; build every ecosystem dep from git"
+       OFF
+)
+
+# The top-level project's name is recorded so nwx_ecosystem_dependency() can 
+# refuse to resolve that one dependency from anywhere but this working tree -- 
+# the "self-override rule" (see
+# https://nwchemex.github.io/author/testing/integration/). Without this, an 
+# integration-testing build
+# that has the ecosystem's wheels installed would resolve the top-level repo
+# to its own *published* copy and silently test the wrong code.
+#
+# Guarded on CMAKE_SOURCE_DIR rather than PROJECT_IS_TOP_LEVEL (CMake 3.21+;
+# our floor is 3.14) so a FetchContent'd dependency including this file from
+# its own add_subdirectory() scope cannot claim the slot.
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR
+   AND NOT DEFINED CACHE{NWX_TOP_PROJECT_NAME})
+    set(NWX_TOP_PROJECT_NAME "${PROJECT_NAME}" CACHE INTERNAL
+        "Name of the top-level project; this ecosystem dependency name must \
+always resolve to this working tree"
+    )
+endif()
 
 # The pybind11 module is a shared object, so everything it statically links
 # against (including FetchContent'd dependencies like spdlog) must be built

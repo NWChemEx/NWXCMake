@@ -14,6 +14,7 @@
 
 include_guard()
 include(FetchContent)
+include(nwx_ecosystem_dependency)
 
 # Reuse a pre-installed copy reachable via the caller's own CMAKE_PREFIX_PATH
 # (e.g. a hand-built or system-package libint2) instead of fetching and
@@ -37,10 +38,18 @@ set(ENABLE_FORTRAN OFF CACHE BOOL "" FORCE)
 set(ENABLE_MPFR    OFF CACHE BOOL "" FORCE)
 set(LIBINT2_PYTHON OFF CACHE BOOL "" FORCE)
 
-FetchContent_Declare(
-    libint2
-    URL https://github.com/evaleev/libint/releases/download/v2.11.0/libint-2.11.0.tgz
-)
+# A local checkout (FETCHCONTENT_SOURCE_DIR_LIBINT2) takes priority over the
+# released tarball -- see nwx_ecosystem_dependency.cmake.
+nwx_local_source_override(libint2 _libint2_local_dir)
+if(_libint2_local_dir)
+    FetchContent_Declare(libint2 SOURCE_DIR "${_libint2_local_dir}")
+else()
+    FetchContent_Declare(
+        libint2
+        URL https://github.com/evaleev/libint/releases/download/v2.11.0/libint-2.11.0.tgz
+    )
+endif()
+unset(_libint2_local_dir)
 
 # Drive MakeAvailable here (instead of letting get_dependencies batch it) so we
 # can build with tests off without leaving the parent project's BUILD_TESTING

@@ -14,6 +14,7 @@
 
 include_guard()
 include(FetchContent)
+include(nwx_ecosystem_dependency)
 
 # Resolution order: (1) a pre-installed copy reachable via the caller's own
 # CMAKE_PREFIX_PATH (e.g. a hand-built or system-package gau2grid), (2) a
@@ -82,11 +83,19 @@ unset(_gd_numpy_rc)
 # validated above, so it can't silently re-resolve to a different one.
 set(Python_EXECUTABLE "${Python_EXECUTABLE}" CACHE FILEPATH "" FORCE)
 
-FetchContent_Declare(
-    gau2grid
-    GIT_REPOSITORY https://github.com/psi4/gau2grid
-    GIT_TAG        master
-)
+# A local checkout (FETCHCONTENT_SOURCE_DIR_GAU2GRID) takes priority over
+# git master -- see nwx_ecosystem_dependency.cmake.
+nwx_local_source_override(gau2grid _gau2grid_local_dir)
+if(_gau2grid_local_dir)
+    FetchContent_Declare(gau2grid SOURCE_DIR "${_gau2grid_local_dir}")
+else()
+    FetchContent_Declare(
+        gau2grid
+        GIT_REPOSITORY https://github.com/psi4/gau2grid
+        GIT_TAG        master
+    )
+endif()
+unset(_gau2grid_local_dir)
 
 # Drive MakeAvailable here (instead of letting get_dependencies batch it) so we
 # can build with tests off without leaving the parent project's BUILD_TESTING

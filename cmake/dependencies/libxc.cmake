@@ -14,6 +14,7 @@
 
 include_guard()
 include(FetchContent)
+include(nwx_ecosystem_dependency)
 
 # Resolution order: (1) a pre-installed copy reachable via the caller's own
 # CMAKE_PREFIX_PATH (e.g. a hand-built or system-package libxc), (2) a
@@ -51,11 +52,19 @@ if(TARGET Libxc::xc)
     return()
 endif()
 
-FetchContent_Declare(
-    libxc
-    GIT_REPOSITORY https://gitlab.com/libxc/libxc
-    GIT_TAG        devel
-)
+# A local checkout (FETCHCONTENT_SOURCE_DIR_LIBXC) takes priority over the
+# devel branch -- see nwx_ecosystem_dependency.cmake.
+nwx_local_source_override(libxc _libxc_local_dir)
+if(_libxc_local_dir)
+    FetchContent_Declare(libxc SOURCE_DIR "${_libxc_local_dir}")
+else()
+    FetchContent_Declare(
+        libxc
+        GIT_REPOSITORY https://gitlab.com/libxc/libxc
+        GIT_TAG        devel
+    )
+endif()
+unset(_libxc_local_dir)
 
 # Drive MakeAvailable here (instead of letting get_dependencies batch it) so we
 # can build libxc with tests off without leaving the parent project's
