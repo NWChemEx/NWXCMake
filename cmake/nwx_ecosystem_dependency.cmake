@@ -141,7 +141,7 @@ macro(nwx_ecosystem_dependency ned_name ned_git_repository)
     # ``TARGET nwx::${ned_name}``: the generated ``<name>Targets.cmake``
     # unconditionally defines ``nwx::<name>`` as an IMPORTED target even when
     # one of ITS OWN transitively-linked dependencies isn't resolvable yet
-    # (e.g. it links against ``nwx::scf``, but ``scf`` is the 
+    # (e.g. it links against ``nwx::scf``, but ``scf`` is the
     # top-level project, so only a bare ``scf`` target exists, not
     # ``nwx::scf``) -- CMake's own install(EXPORT) boilerplate detects that
     # and sets ``<name>_FOUND FALSE``, but leaves the half-broken IMPORTED
