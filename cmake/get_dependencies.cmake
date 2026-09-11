@@ -39,6 +39,23 @@ function(get_dependencies)
     set(CMAKE_EXPORT_NO_PACKAGE_REGISTRY ON CACHE BOOL
         "Never let export(PACKAGE ...) write to ~/.cmake/packages")
     foreach(depend_i ${ARGN})
+        # A dependency already resolved earlier in this same configure has to
+        # be short-circuited *here*, before the include() below. Every
+        # dependencies/<name>.cmake carries an include_guard(), so a second
+        # include() of one is a silent no-op: the body never runs, _gd_uses_fc
+        # keeps the TRUE default set below, and the name lands in
+        # _gd_fc_names -- handing FetchContent_MakeAvailable() a dependency
+        # that was never FetchContent_Declare()d ("No content details recorded
+        # for <name>").
+        if(DEFINED CACHE{NWX_DEP_TARGET_${depend_i}}
+           AND TARGET "${NWX_DEP_TARGET_${depend_i}}")
+            message(STATUS
+                "Dependency ${depend_i}: already resolved "
+                "(${NWX_DEP_TARGET_${depend_i}})"
+            )
+            list(APPEND _gd_targets "${NWX_DEP_TARGET_${depend_i}}")
+            continue()
+        endif()
         message(STATUS "Fetching dependency: ${depend_i}")
         set(_gd_uses_fc TRUE)
         include(dependencies/${depend_i})
