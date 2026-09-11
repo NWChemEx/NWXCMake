@@ -67,7 +67,7 @@ option(DEVELOPER_SETUP         "Wire up local dev tooling (pre-commit)" OFF)
 # ON default) to gate "-march=native"/"-xHost". Declaring it here -- this
 # file is included right after project(), long before get_dependencies()
 # fetches anything -- creates the cache entry first, so their own option()
-# calls become no-ops and this one value governs all of them at once. 
+# calls become no-ops and this one value governs all of them at once.
 #
 # ON is right for a build that runs on the machine that produced it, and
 # wrong for anything redistributed or compiled through a shared cache,
