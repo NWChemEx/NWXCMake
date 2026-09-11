@@ -39,6 +39,39 @@ function(get_dependencies)
     set(CMAKE_EXPORT_NO_PACKAGE_REGISTRY ON CACHE BOOL
         "Never let export(PACKAGE ...) write to ~/.cmake/packages")
     foreach(depend_i ${ARGN})
+        # A dependency already resolved earlier in this same configure has to
+        # be short-circuited *here*, before the include() below. Every
+        # dependencies/<name>.cmake carries an include_guard(), so a second
+        # include() of one is a silent no-op: the body never runs, _gd_uses_fc
+        # keeps the TRUE default set below, and the name lands in
+        # _gd_fc_names -- handing FetchContent_MakeAvailable() a dependency
+        # that was never FetchContent_Declare()d ("No content details recorded
+        # for <name>").
+        #
+        # This only bites once some dependencies resolve *without*
+        # FetchContent. While everything came from git master
+        # (nwx_ecosystem_dependency branch 5) the first include() always
+        # declared the dependency, so a repeat MakeAvailable() found the
+        # details it needed and did nothing. Resolving from an installed wheel
+        # (branch 4) or an already-defined target (branch 2) declares nothing,
+        # so the repeat is fatal -- e.g. an integration-testing build, where
+        # the ecosystem is pip-installed before configure, resolves utilities
+        # from its wheel and then hits it again via tensorwrapper's own nested
+        # get_dependencies() call.
+        #
+        # NWX_DEP_TARGET_<name> is a CACHE INTERNAL, so it survives into later
+        # configures of the same build tree; the TARGET check keeps a stale
+        # entry from short-circuiting a configure that hasn't defined that
+        # target (yet), which falls through to the include() below as usual.
+        if(DEFINED CACHE{NWX_DEP_TARGET_${depend_i}}
+           AND TARGET "${NWX_DEP_TARGET_${depend_i}}")
+            message(STATUS
+                "Dependency ${depend_i}: already resolved "
+                "(${NWX_DEP_TARGET_${depend_i}})"
+            )
+            list(APPEND _gd_targets "${NWX_DEP_TARGET_${depend_i}}")
+            continue()
+        endif()
         message(STATUS "Fetching dependency: ${depend_i}")
         set(_gd_uses_fc TRUE)
         include(dependencies/${depend_i})
