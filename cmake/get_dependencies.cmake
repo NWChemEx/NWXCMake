@@ -47,22 +47,6 @@ function(get_dependencies)
         # _gd_fc_names -- handing FetchContent_MakeAvailable() a dependency
         # that was never FetchContent_Declare()d ("No content details recorded
         # for <name>").
-        #
-        # This only bites once some dependencies resolve *without*
-        # FetchContent. While everything came from git master
-        # (nwx_ecosystem_dependency branch 5) the first include() always
-        # declared the dependency, so a repeat MakeAvailable() found the
-        # details it needed and did nothing. Resolving from an installed wheel
-        # (branch 4) or an already-defined target (branch 2) declares nothing,
-        # so the repeat is fatal -- e.g. an integration-testing build, where
-        # the ecosystem is pip-installed before configure, resolves utilities
-        # from its wheel and then hits it again via tensorwrapper's own nested
-        # get_dependencies() call.
-        #
-        # NWX_DEP_TARGET_<name> is a CACHE INTERNAL, so it survives into later
-        # configures of the same build tree; the TARGET check keeps a stale
-        # entry from short-circuiting a configure that hasn't defined that
-        # target (yet), which falls through to the include() below as usual.
         if(DEFINED CACHE{NWX_DEP_TARGET_${depend_i}}
            AND TARGET "${NWX_DEP_TARGET_${depend_i}}")
             message(STATUS
