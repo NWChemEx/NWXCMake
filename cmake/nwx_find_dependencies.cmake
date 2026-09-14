@@ -98,6 +98,17 @@ macro(nwx_config_find_dependency ncfd_pkg)
     else()
         # Ecosystem packages (installed as siblings under this prefix) and
         # anything else with a well-behaved config or find module.
+        #
+        # Some of these are a genuine requirement on the consumer's system
+        # rather than something the wheels supply. Eigen3 is the current
+        # example: it is a public usage requirement of nwx::tensorwrapper, but
+        # dependencies/eigen.cmake pulls it in with FetchContent at build
+        # time, so nothing ever installs an Eigen3Config.cmake next to the
+        # libraries that need it. A consumer without Eigen therefore gets an
+        # ordinary "could not find a package configuration file provided by
+        # Eigen3" at configure time -- accepted for now, and at least a named,
+        # actionable error rather than the dangling-imported-target failure at
+        # generate time that this module exists to prevent.
         find_dependency(${ncfd_pkg})
     endif()
 endmacro()
