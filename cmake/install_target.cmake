@@ -72,6 +72,34 @@ function(write_config_file wcf_file wcf_name)
                 list(APPEND _wcf_deps "${CMAKE_MATCH_1}")
             elseif(_wcf_link MATCHES "^([^:]+)::")
                 list(APPEND _wcf_deps "${CMAKE_MATCH_1}")
+            elseif(DEFINED CACHE{NWX_DEP_TARGET_${_wcf_link}})
+                # An un-namespaced entry that get_dependencies() resolved:
+                # a dependency built from source in this very build tree.
+                #
+                # This is the normal case for a wheel. build-system.requires
+                # carries no ecosystem packages, so nothing resolves as an
+                # installed wheel and nwx_ecosystem_dependency falls through to
+                # its git-master branch, which appends the bare target name
+                # (nwx_ecosystem_dependency.cmake:176); nwx_library then links
+                # a plain "utilities", not "nwx::utilities".
+                #
+                # The exported file does not look like that. install(EXPORT)
+                # rewrites such a target to the name it is exported under, so
+                # <name>Targets.cmake ends up saying nwx::utilities. Reading
+                # the property here, before that rewrite, is the one place the
+                # bare form is visible -- and skipping it silently dropped
+                # exactly the ecosystem dependencies this function exists to
+                # declare. nwchemex-pluginplay 1.0.64 shipped that way: its
+                # config emitted Boost alone while its own targets file
+                # referenced nwx::utilities and nwx::parallelzone, so
+                # pluginplay_FOUND came back FALSE.
+                #
+                # NWX_DEP_TARGET_<name> is the cache entry get_dependencies()
+                # writes for everything it resolves, so its presence is what
+                # separates a dependency from a target belonging to this
+                # project (which needs no find_dependency and has no config to
+                # find).
+                list(APPEND _wcf_deps "${_wcf_link}")
             endif()
         endforeach()
     endif()
@@ -172,6 +200,28 @@ function(write_config_file wcf_file wcf_name)
     )
 endfunction()
 
+#[[[
+# Writes every config file queued by install_library().
+#
+# Runs deferred, at the end of the directory that queued the work, so the
+# target's public dependencies are complete. Drains the queue, so the repeated
+# cmake_language(DEFER) registrations one directory can accumulate cost
+# nothing: the first invocation does the work and the rest find it empty.
+#]]
+function(nwx_write_pending_config_files)
+    get_property(_nwpcf_pending GLOBAL PROPERTY NWX_PENDING_CONFIG_FILES)
+    if(NOT _nwpcf_pending)
+        return()
+    endif()
+    set_property(GLOBAL PROPERTY NWX_PENDING_CONFIG_FILES "")
+    foreach(_nwpcf_entry IN LISTS _nwpcf_pending)
+        string(REPLACE "\t" ";" _nwpcf_parts "${_nwpcf_entry}")
+        list(GET _nwpcf_parts 0 _nwpcf_name)
+        list(GET _nwpcf_parts 1 _nwpcf_file)
+        write_config_file("${_nwpcf_file}" "${_nwpcf_name}")
+    endforeach()
+endfunction()
+
 function(install_library il_name il_header_dir)
     #TODO: Get these values programmatically
     set(_il_archive_dir lib)
@@ -201,7 +251,32 @@ function(install_library il_name il_header_dir)
     )
 
     set(_il_config_file "${CMAKE_CURRENT_BINARY_DIR}/${il_name}Config.cmake")
-    write_config_file("${_il_config_file}" "${il_name}")
+    # Deferred to the end of this directory's processing rather than written
+    # now, because "now" is too early to know the target's public dependencies.
+    # A project routinely adds usage requirements *after* the nwx_library()
+    # call that installs it -- PluginPlay links pybind11::pybind11 and
+    # Python::Module twenty lines below its own nwx_library() -- and those
+    # additions still reach the exported link interface that install(EXPORT)
+    # writes. Reading the property at install_library() time missed them, so
+    # nwchemex-pluginplay 1.0.64 shipped a config that declared neither, and a
+    # consumer linking nwx::pluginplay died at generate time on the dangling
+    # pybind11::pybind11.
+    #
+    # install(FILES) below only records the path; the file itself is not read
+    # until install time, long after the deferred call has produced it.
+    # State travels through a global property rather than the deferred call's
+    # arguments: il_name and _il_config_file are function-scope, and they do
+    # not survive to deferred execution -- passing them directly produced
+    # "get_target_property called with incorrect number of arguments" from an
+    # empty target name.
+    if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.19)
+        set_property(GLOBAL APPEND PROPERTY
+            NWX_PENDING_CONFIG_FILES "${il_name}\t${_il_config_file}"
+        )
+        cmake_language(DEFER CALL nwx_write_pending_config_files)
+    else()
+        write_config_file("${_il_config_file}" "${il_name}")
+    endif()
 
     install(FILES "${_il_config_file}"
         DESTINATION "${_il_library_dir}/cmake/${il_name}"
