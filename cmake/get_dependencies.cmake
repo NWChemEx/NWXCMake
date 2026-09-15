@@ -59,6 +59,29 @@ function(get_dependencies)
         message(STATUS "Fetching dependency: ${depend_i}")
         set(_gd_uses_fc TRUE)
         include(dependencies/${depend_i})
+        # The check above cannot catch a dependency that some *other* package's
+        # find_dependency() chain already supplied. It runs before the include(),
+        # so on a first call there is no NWX_DEP_TARGET_<name> cache entry yet to
+        # test, and even if there were it would hold the bare dep name -- which
+        # for a third-party package is usually not a target that exists
+        # (pybind11 defines pybind11::pybind11, Catch2 defines Catch2::Catch2).
+        # Only the include() above knows the real name, via _gd_target_<name>.
+        #
+        # Re-checking here matters because the two providers are not
+        # interchangeable at this point: FetchContent_MakeAvailable() only
+        # dedups against its own earlier population, so fetching on top of an
+        # already-find_package()d dependency runs add_subdirectory() over a
+        # source tree that re-creates targets which already exist -- a hard
+        # error ("add_library cannot create ALIAS target ... because another
+        # target with the same name already exists"), not a warning.
+        if(_gd_uses_fc AND DEFINED _gd_target_${depend_i}
+           AND TARGET "${_gd_target_${depend_i}}")
+            message(STATUS
+                "  ${depend_i}: already provided (${_gd_target_${depend_i}})"
+            )
+            list(APPEND _gd_targets "${_gd_target_${depend_i}}")
+            set(_gd_uses_fc FALSE)
+        endif()
         if(_gd_uses_fc)
             list(APPEND _gd_fc_names ${depend_i})
         endif()
