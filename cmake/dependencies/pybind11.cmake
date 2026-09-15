@@ -15,6 +15,28 @@
 include_guard()
 include(FetchContent)
 
+# pybind11 never defines a target named "pybind11", so without this override
+# get_dependencies()'s already-resolved check (TARGET ${NWX_DEP_TARGET_pybind11},
+# defaulting to the bare dep name) can never fire. That was survivable while
+# FetchContent_MakeAvailable() was the only way pybind11 entered a build -- it
+# dedups internally, so the repeated "Fetching dependency: pybind11" lines cost
+# nothing but noise.
+#
+# It stopped being survivable once the generated <name>Config.cmake files
+# started declaring their real dependencies: pluginplayConfig.cmake now calls
+# nwx_config_find_dependency(pybind11), which find_package()es the wheel's
+# config and creates pybind11::pybind11 et al. as IMPORTED targets. A later
+# get_dependencies(pybind11) would miss them, fall through to
+# FetchContent_MakeAvailable(), and add_subdirectory() pybind11's own
+# CMakeLists -- which then dies trying to re-create those same targets
+# ("add_library cannot create ALIAS target \"pybind11::pybind11_headers\"
+# because another target with the same name already exists").
+#
+# pybind11::pybind11 is the right name to key on: tools/pybind11Common.cmake
+# creates it, and both provisioning paths include that file -- the installed
+# wheel's config directly, and the fetched source via its CMakeLists.
+set(_gd_target_pybind11 "pybind11::pybind11")
+
 FetchContent_Declare(
     pybind11
     GIT_REPOSITORY https://github.com/pybind/pybind11
