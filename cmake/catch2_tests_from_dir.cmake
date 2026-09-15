@@ -83,6 +83,41 @@ function(catch2_tests_from_dir ctfd_target_name ctfd_dir)
     target_link_libraries(
         ${ctfd_target_name} PRIVATE Catch2::Catch2WithMain ${ctfd_UNPARSED_ARGUMENTS})
 
+    # A test executable can acquire pybind11 transitively, from an ecosystem
+    # dependency's public link interface rather than from anything the caller
+    # asked for: nwx::pluginplay exports pybind11::pybind11 and Python::Module,
+    # so a test that links, say, nwx::simde ends up compiling the CPython API
+    # into an executable.
+    #
+    # Python::Module is deliberately headers-without-libpython. That is correct
+    # for a loadable extension module -- the interpreter that dlopen()s it
+    # already holds those symbols -- and wrong for an executable, which has no
+    # interpreter underneath it. The failure is platform-shaped, so it is easy
+    # to mistake for two bugs: Linux reports several hundred "undefined
+    # reference to `Py...'" at link, while macOS links clean (Python::Module
+    # implies -undefined dynamic_lookup) and instead aborts at startup on the
+    # first eagerly-bound data symbol, "dyld: symbol not found in flat
+    # namespace '_PyBaseObject_Type'".
+    #
+    # Development.Embed is the component carrying the real libpython, so
+    # Python::Python supplies precisely what the executable is missing.
+    #
+    # This belongs here rather than in the public link interface of the
+    # dependency that drags pybind11 in: a PUBLIC Python::Python would reach
+    # every consumer, the pybind11 extension modules included, and an
+    # extension module must never link libpython (auditwheel strips it --
+    # "Linking with libpython is forbidden for manylinux/musllinux wheels").
+    # Confining it to test executables keeps libpython out of the wheels.
+    #
+    # Gated on BUILD_PYBIND11_BINDINGS so a build that has deliberately turned
+    # Python off does not acquire a hard requirement on an embeddable
+    # libpython, which is a separate artifact from Development.Module and is
+    # not installed everywhere.
+    if(BUILD_PYBIND11_BINDINGS)
+        find_package(Python REQUIRED COMPONENTS Interpreter Development.Embed)
+        target_link_libraries(${ctfd_target_name} PRIVATE Python::Python)
+    endif()
+
     add_test(NAME ${ctfd_target_name}
          COMMAND ${ctfd_target_name}
          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
