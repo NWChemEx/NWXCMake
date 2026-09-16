@@ -35,7 +35,8 @@ endif()
 # rebuilding libxc from source every time. Scoped to exactly that directory
 # (NO_DEFAULT_PATH) so this can never accidentally match an unrelated
 # system-wide install (e.g. Homebrew).
-if(NWX_VENV_SITE_PACKAGES)
+
+if(NWX_VENV_SITE_PACKAGES AND NOT NWX_ECOSYSTEM_FROM_SOURCE)
     # A dependency fetched earlier in this same configure (e.g. GauXC, which
     # transitively fetches its own libxc) can leave a stale/negative
     # Libxc_DIR cache entry behind from its own unrelated, unscoped

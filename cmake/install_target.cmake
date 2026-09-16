@@ -122,6 +122,89 @@ function(write_config_file wcf_file wcf_name)
         "\"\${CMAKE_CURRENT_LIST_FILE}\" PATH)\n"
     )
 
+    # Stamp the C++ standard library this package was BUILT against, and make
+    # the config verify it against whatever the consumer is using. Nothing in
+    # a wheel's platform tag records this, so without the stamp a mismatch is
+    # discovered as an undefined-symbol link error (Linux) or, worse, a
+    # successful link followed by a "symbol not found in flat namespace" abort
+    # at run time (macOS, which resolves lazily).
+    #
+    # Emitted self-contained rather than delegating to NWXCMake: a config must
+    # keep working for a consumer who has no nwxcmake importable, and leaf
+    # packages skip the locator block below entirely because they have no
+    # dependencies.
+    include(nwx_cxx_stdlib)
+    nwx_detect_cxx_stdlib(_wcf_stdlib_kind _wcf_stdlib_ver)
+    file(APPEND
+        "${wcf_file}"
+        "\n"
+        "# C++ standard library this package was built against.\n"
+        "set(${wcf_name}_BUILT_WITH_STDLIB \"${_wcf_stdlib_kind}\")\n"
+        "set(${wcf_name}_BUILT_WITH_STDLIB_VERSION \"${_wcf_stdlib_ver}\")\n"
+        "if(CMAKE_CXX_COMPILER AND NOT ${wcf_name}_SKIP_ABI_CHECK)\n"
+        "    set(_IL_${wcf_name}_PROBE \"\${CMAKE_CURRENT_BINARY_DIR}/nwx_stdlib_probe_${wcf_name}.cpp\")\n"
+        "    file(WRITE \"\${_IL_${wcf_name}_PROBE}\" \"#include <string>\\n\")\n"
+        "    separate_arguments(_IL_${wcf_name}_FLAGS NATIVE_COMMAND \"\${CMAKE_CXX_FLAGS}\")\n"
+        "    execute_process(\n"
+        "        COMMAND \"\${CMAKE_CXX_COMPILER}\" \${_IL_${wcf_name}_FLAGS} -x c++ -E -dM \"\${_IL_${wcf_name}_PROBE}\"\n"
+        "        OUTPUT_VARIABLE _IL_${wcf_name}_DEFS ERROR_QUIET RESULT_VARIABLE _IL_${wcf_name}_RC)\n"
+        "    file(REMOVE \"\${_IL_${wcf_name}_PROBE}\")\n"
+        "    set(_IL_${wcf_name}_KIND \"unknown\")\n"
+        "    set(_IL_${wcf_name}_VER \"unknown\")\n"
+        "    if(_IL_${wcf_name}_RC EQUAL 0)\n"
+        "        if(_IL_${wcf_name}_DEFS MATCHES \"_LIBCPP_VERSION[ \\t]+([0-9]+)\")\n"
+        "            set(_IL_${wcf_name}_KIND \"libc++\")\n"
+        "            set(_IL_${wcf_name}_VER \"\${CMAKE_MATCH_1}\")\n"
+        "        elseif(_IL_${wcf_name}_DEFS MATCHES \"_GLIBCXX_USE_CXX11_ABI[ \\t]+([0-9]+)\")\n"
+        "            set(_IL_${wcf_name}_KIND \"libstdc++\")\n"
+        "            set(_IL_${wcf_name}_VER \"cxx11abi=\${CMAKE_MATCH_1}\")\n"
+        "        endif()\n"
+        "    endif()\n"
+        "    if(NOT _IL_${wcf_name}_KIND STREQUAL \"unknown\"\n"
+        "       AND NOT _IL_${wcf_name}_KIND STREQUAL \"${_wcf_stdlib_kind}\")\n"
+        "        message(FATAL_ERROR\n"
+        "            \"${wcf_name} was built against ${_wcf_stdlib_kind}, but this build uses \"\n"
+        "            \"\${_IL_${wcf_name}_KIND} (\${CMAKE_CXX_COMPILER_ID}). The two spell std::string \"\n"
+        "            \"differently in the mangled ABI, so linking them cannot work.\\n\"\n"
+        "            \"Build with a compiler using ${_wcf_stdlib_kind}, or build the ecosystem \"\n"
+        "            \"from source with -DNWX_ECOSYSTEM_FROM_SOURCE=ON.\")\n"
+        "    elseif(_IL_${wcf_name}_KIND STREQUAL \"libstdc++\"\n"
+        "           AND NOT _IL_${wcf_name}_VER STREQUAL \"${_wcf_stdlib_ver}\")\n"
+        "        message(FATAL_ERROR\n"
+        "            \"${wcf_name} was built with ${_wcf_stdlib_ver}, but this build uses \"\n"
+        "            \"\${_IL_${wcf_name}_VER}. libstdc++'s two std::string ABIs are not \"\n"
+        "            \"link-compatible (Ss vs NSt7__cxx11...).\\n\"\n"
+        "            \"Rebuild this package, or set -D_GLIBCXX_USE_CXX11_ABI to match.\")\n"
+        "    elseif(_IL_${wcf_name}_KIND STREQUAL \"libc++\"\n"
+        "           AND NOT _IL_${wcf_name}_VER STREQUAL \"${_wcf_stdlib_ver}\")\n"
+        "        # Mangling agrees across libc++ versions, so this links; what\n"
+        "        # differs is layout and inlined code. Apple's libc++ and\n"
+        "        # Homebrew LLVM's are separate implementations and mixing them\n"
+        "        # aborts in dyld, but a consumer merely on a different Xcode is\n"
+        "        # usually fine -- so warn, and let CI opt into strictness.\n"
+        "        if(${wcf_name}_STRICT_ABI_CHECK OR NWX_STRICT_ABI_CHECK)\n"
+        "            set(_IL_${wcf_name}_LEVEL FATAL_ERROR)\n"
+        "        else()\n"
+        "            set(_IL_${wcf_name}_LEVEL WARNING)\n"
+        "        endif()\n"
+        "        message(\${_IL_${wcf_name}_LEVEL}\n"
+        "            \"${wcf_name} was built against libc++ ${_wcf_stdlib_ver}, but this build \"\n"
+        "            \"uses libc++ \${_IL_${wcf_name}_VER}. These mangle identically, so this \"\n"
+        "            \"will link and may then abort at run time with 'symbol not found in \"\n"
+        "            \"flat namespace'. Two different libc++ implementations (e.g. the macOS \"\n"
+        "            \"SDK's vs Homebrew LLVM's) must not be mixed; a different Xcode is \"\n"
+        "            \"usually benign. Set ${wcf_name}_SKIP_ABI_CHECK=ON to silence.\")\n"
+        "        unset(_IL_${wcf_name}_LEVEL)\n"
+        "    endif()\n"
+        "    unset(_IL_${wcf_name}_PROBE)\n"
+        "    unset(_IL_${wcf_name}_FLAGS)\n"
+        "    unset(_IL_${wcf_name}_DEFS)\n"
+        "    unset(_IL_${wcf_name}_RC)\n"
+        "    unset(_IL_${wcf_name}_KIND)\n"
+        "    unset(_IL_${wcf_name}_VER)\n"
+        "endif()\n"
+    )
+
     if(_wcf_deps)
         # <prefix>/lib/cmake/<name>/<name>Config.cmake -> <prefix>, the same
         # three-PATH walk install(EXPORT)'s own _IMPORT_PREFIX does. Every

@@ -36,7 +36,8 @@ endif()
 # libxc) from source every time. Scoped to exactly that directory
 # (NO_DEFAULT_PATH) so this can never accidentally match an unrelated
 # system-wide install (e.g. Homebrew).
-if(NWX_VENV_SITE_PACKAGES)
+
+if(NWX_VENV_SITE_PACKAGES AND NOT NWX_ECOSYSTEM_FROM_SOURCE)
     # GauXC's own (unrelated, unscoped) internal find_package() calls for its
     # own transitive deps can leave a stale/negative <Pkg>_DIR cache entry
     # behind from an earlier point in this same configure; clear it first so

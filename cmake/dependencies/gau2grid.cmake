@@ -35,7 +35,8 @@ endif()
 # rebuilding gau2grid from source every time. Scoped to exactly that
 # directory (NO_DEFAULT_PATH) so this can never accidentally match an
 # unrelated system-wide install (e.g. Homebrew).
-if(NWX_VENV_SITE_PACKAGES)
+
+if(NWX_VENV_SITE_PACKAGES AND NOT NWX_ECOSYSTEM_FROM_SOURCE)
     # GauXC's own (unrelated, unscoped) internal find_package(gau2grid) call
     # for its own grid-generation code can leave a stale/negative
     # gau2grid_DIR cache entry behind from earlier in this same configure;
