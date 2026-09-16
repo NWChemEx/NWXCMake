@@ -25,6 +25,12 @@ function(get_dependencies)
     # `cmake -Bbuild` configure (e.g. the CI cmake_build action).
     include(dependencies/skbuild_python)
 
+    # NWX_VENV_SITE_PACKAGES is now known, and nothing has resolved against it
+    # yet -- the one place a "these wheels can't work with this compiler"
+    # check can fire before the damage is done.
+    include(nwx_wheel_abi_guard)
+    nwx_assert_wheel_toolchain_supported()
+
     # Dependencies found via find_package() below (gauxc, libxc, gau2grid,
     # ...) must only ever resolve against CMAKE_PREFIX_PATH (the active
     # venv, populated by get_skbuild_python_path() above) -- never against

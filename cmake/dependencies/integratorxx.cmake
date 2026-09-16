@@ -49,7 +49,8 @@ endif()
 # rebuilding IntegratorXX from source every time. Scoped to exactly that
 # directory (NO_DEFAULT_PATH) so this can never accidentally match an
 # unrelated system-wide install (e.g. Homebrew).
-if(NWX_VENV_SITE_PACKAGES)
+
+if(NWX_VENV_SITE_PACKAGES AND NOT NWX_ECOSYSTEM_FROM_SOURCE)
     unset(IntegratorXX_DIR CACHE)
     find_package(IntegratorXX CONFIG QUIET
         PATHS "${NWX_VENV_SITE_PACKAGES}" NO_DEFAULT_PATH
