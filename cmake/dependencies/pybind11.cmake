@@ -37,8 +37,28 @@ include(FetchContent)
 # wheel's config directly, and the fetched source via its CMakeLists.
 set(_gd_target_pybind11 "pybind11::pybind11")
 
+# KEEP THIS TAG IN SYNC WITH THE "pybind11==" PIN IN EVERY ECOSYSTEM REPO'S
+# pyproject.toml. pybind11 keys its type registry on PYBIND11_INTERNALS_VERSION,
+# which is baked into each extension as
+# __pybind11_internals_v<N>_<stdlib>_<abi>__. Two modules built against
+# different N get SEPARATE registries and cannot exchange types, even though
+# importing one from the other succeeds.
+#
+# That is not hypothetical: with this tag at v3.0.2 (internals v11) while
+# pyproject.toml asked for an unpinned "pybind11" (pip resolved 3.1.0,
+# internals v12), the published wheels were v11 and any local CMake build
+# against them was v12. SCF'"'"'s test_cmake_build -- which pip installs the
+# ecosystem and then builds SCF from source -- died with
+#
+#   TypeError: Unregistered type : parallelzone::runtime::RuntimeView
+#
+# from scf.initialize(), because scf'"'"'s locally built module could not see the
+# RuntimeView the installed parallelzone wheel had registered. Wheel-only and
+# source-only builds both worked, which is why it hid for so long.
+#
+# Version -> internals: 3.0.2 -> 11, 3.1.0 -> 12.
 FetchContent_Declare(
     pybind11
     GIT_REPOSITORY https://github.com/pybind/pybind11
-    GIT_TAG        "v3.0.2"
+    GIT_TAG        "v3.1.0"
 )
