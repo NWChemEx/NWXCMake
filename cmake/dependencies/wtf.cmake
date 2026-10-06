@@ -13,16 +13,6 @@
 # limitations under the License.
 
 include_guard()
-include(FetchContent)
+include(nwx_ecosystem_dependency)
 
-FetchContent_Declare(
-    wtf
-    GIT_REPOSITORY https://github.com/nwchemex/WeaklyTypedFloat
-    GIT_TAG        "master"
-)
-
-if(SKBUILD)
-    LIST(APPEND _gd_targets nwx::wtf)
-else()
-    LIST(APPEND _gd_targets wtf)
-endif()
+nwx_ecosystem_dependency(wtf https://github.com/NWChemEx/WeaklyTypedFloat)
