@@ -316,10 +316,19 @@ function(install_library il_name il_header_dir)
     # project that called this function -- for a dependency pulled in with
     # FetchContent that is the dependency's own project, not the top-level
     # one. A plain `cmake --install` names no component and installs all of
-    # them, so a from-source install prefix stays self-contained. A wheel
-    # build sets scikit-build-core's install.components to its own project
-    # name, so it ships only its own files instead of a copy of every
-    # dependency it fetched (which other wheels also ship, and overwrite).
+    # them, so a from-source install prefix stays self-contained.
+    #
+    # Nothing here filters the install; that happens in each repo's
+    # pyproject.toml, where a wheel build sets scikit-build-core's
+    # install.components to ["<project>", "Unspecified"]. "<project>" keeps
+    # this project's own files and drops those of fetched ecosystem
+    # dependencies, which ship in their own wheels (and would otherwise be
+    # duplicated and overwritten). "Unspecified" is CMake's default
+    # component, which third-party dependencies (spdlog, cereal, libfort,
+    # ...) install under, so the wheel that fetched one still ships it.
+    # A third-party dependency that installs under a *named* component
+    # (e.g. libint2's own rules) is dropped unless that component is added
+    # to the list as well.
     set(_il_component "${PROJECT_NAME}")
 
     # -- Install target that is a library --
