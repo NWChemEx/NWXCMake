@@ -83,6 +83,11 @@ function(catch2_tests_from_dir ctfd_target_name ctfd_dir)
     target_link_libraries(
         ${ctfd_target_name} PRIVATE Catch2::Catch2WithMain ${ctfd_UNPARSED_ARGUMENTS})
 
+    # Run from the build tree, so it needs a build rpath that outlives pip's
+    # temporary build env -- see nwx_site_packages_rpath.cmake.
+    include(nwx_site_packages_rpath)
+    nwx_add_site_packages_build_rpath(${ctfd_target_name})
+
     # A test executable can acquire pybind11 transitively, from an ecosystem
     # dependency's public link interface rather than from anything the caller
     # asked for: nwx::pluginplay exports pybind11::pybind11 and Python::Module,
