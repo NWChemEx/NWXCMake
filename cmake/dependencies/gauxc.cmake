@@ -45,7 +45,7 @@ if(NWX_VENV_SITE_PACKAGES AND NOT NWX_ECOSYSTEM_FROM_SOURCE)
     # instead of silently reusing that unrelated result.
     unset(gauxc_DIR CACHE)
     find_package(gauxc CONFIG QUIET
-        PATHS "${NWX_VENV_SITE_PACKAGES}" NO_DEFAULT_PATH
+        PATHS ${NWX_VENV_SITE_PACKAGES} NO_DEFAULT_PATH
     )
 endif()
 if(TARGET gauxc::gauxc)

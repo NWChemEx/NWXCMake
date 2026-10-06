@@ -312,16 +312,32 @@ function(install_library il_name il_header_dir)
     set(_il_runtime_dir bin)
     set(_il_includes_dir include)
 
+    # Every install rule below belongs to the component named after the
+    # project that called this function -- for a dependency pulled in with
+    # FetchContent that is the dependency's own project, not the top-level
+    # one. A plain `cmake --install` names no component and installs all of
+    # them, so a from-source install prefix stays self-contained. A wheel
+    # build sets scikit-build-core's install.components to its own project
+    # name, so it ships only its own files instead of a copy of every
+    # dependency it fetched (which other wheels also ship, and overwrite).
+    set(_il_component "${PROJECT_NAME}")
+
     # -- Install target that is a library --
     get_target_property(_il_type ${il_name} TYPE)
     if(_il_type STREQUAL "INTERFACE_LIBRARY")
-        install(TARGETS ${il_name} EXPORT ${il_name}Targets)
+        install(TARGETS ${il_name}
+            EXPORT ${il_name}Targets
+            COMPONENT "${_il_component}"
+        )
     else()
         install(TARGETS ${il_name}
             EXPORT ${il_name}Targets
             ARCHIVE DESTINATION "${_il_archive_dir}"
+                COMPONENT "${_il_component}"
             LIBRARY DESTINATION "${_il_library_dir}"
+                COMPONENT "${_il_component}"
             RUNTIME DESTINATION "${_il_runtime_dir}"
+                COMPONENT "${_il_component}"
             INCLUDES DESTINATION "${_il_includes_dir}"
         )
     endif()
@@ -331,6 +347,7 @@ function(install_library il_name il_header_dir)
         FILE ${il_name}Targets.cmake
         NAMESPACE nwx::
         DESTINATION "${_il_library_dir}/cmake/${il_name}"
+        COMPONENT "${_il_component}"
     )
 
     set(_il_config_file "${CMAKE_CURRENT_BINARY_DIR}/${il_name}Config.cmake")
@@ -363,6 +380,7 @@ function(install_library il_name il_header_dir)
 
     install(FILES "${_il_config_file}"
         DESTINATION "${_il_library_dir}/cmake/${il_name}"
+        COMPONENT "${_il_component}"
     )
 
     # -- Install Headers --
@@ -375,6 +393,7 @@ function(install_library il_name il_header_dir)
     if(il_header_dir)
         install(DIRECTORY "${il_header_dir}/"
             DESTINATION "${_il_includes_dir}"
+            COMPONENT "${_il_component}"
             FILES_MATCHING
                 PATTERN "*.hpp"
                 PATTERN "*.h"

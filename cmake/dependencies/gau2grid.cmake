@@ -44,7 +44,7 @@ if(NWX_VENV_SITE_PACKAGES AND NOT NWX_ECOSYSTEM_FROM_SOURCE)
     # authoritative search instead of silently reusing that unrelated result.
     unset(gau2grid_DIR CACHE)
     find_package(gau2grid CONFIG QUIET
-        PATHS "${NWX_VENV_SITE_PACKAGES}" NO_DEFAULT_PATH
+        PATHS ${NWX_VENV_SITE_PACKAGES} NO_DEFAULT_PATH
     )
 endif()
 if(TARGET gau2grid::gg)
