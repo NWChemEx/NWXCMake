@@ -58,6 +58,10 @@ sys.stdout.write(';'.join(out))"
     # match an unrelated same-named package -- can pass it explicitly via
     # PATHS ... NO_DEFAULT_PATH. This is a list; expand it unquoted.
     set(NWX_VENV_SITE_PACKAGES ${_tp_py_site_dirs})
+    # Also published globally: get_dependencies() is a function, so the
+    # variable above never reaches the scopes that create targets.
+    # nwx_add_site_packages_build_rpath() reads this.
+    set_property(GLOBAL PROPERTY NWX_SITE_PACKAGES_DIRS ${_tp_py_site_dirs})
 endmacro()
 
 get_skbuild_python_path()

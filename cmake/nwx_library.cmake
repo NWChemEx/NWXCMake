@@ -104,6 +104,8 @@ function(nwx_library nl_project_name nl_inc_dir nl_src_dir)
                 PROPERTIES INSTALL_RPATH "$ORIGIN;$ORIGIN/lib"
             )
         endif()
+        include(nwx_site_packages_rpath)
+        nwx_add_site_packages_build_rpath(${nl_project_name})
     else()
         # Header-only library — INTERFACE target.
         # PRIVATE deps have no meaning for INTERFACE targets; they are silently
