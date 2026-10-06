@@ -53,7 +53,7 @@ endif()
 if(NWX_VENV_SITE_PACKAGES AND NOT NWX_ECOSYSTEM_FROM_SOURCE)
     unset(IntegratorXX_DIR CACHE)
     find_package(IntegratorXX CONFIG QUIET
-        PATHS "${NWX_VENV_SITE_PACKAGES}" NO_DEFAULT_PATH
+        PATHS ${NWX_VENV_SITE_PACKAGES} NO_DEFAULT_PATH
     )
 endif()
 if(TARGET IntegratorXX::IntegratorXX)

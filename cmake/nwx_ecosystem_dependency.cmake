@@ -152,7 +152,7 @@ macro(nwx_ecosystem_dependency ned_name ned_git_repository)
     if(NWX_VENV_SITE_PACKAGES AND NOT NWX_ECOSYSTEM_FROM_SOURCE)
         unset(${ned_name}_DIR CACHE)
         find_package(${ned_name} CONFIG QUIET
-            PATHS "${NWX_VENV_SITE_PACKAGES}" NO_DEFAULT_PATH
+            PATHS ${NWX_VENV_SITE_PACKAGES} NO_DEFAULT_PATH
         )
         if(TARGET nwx::${ned_name} AND ${ned_name}_FOUND)
             message(STATUS

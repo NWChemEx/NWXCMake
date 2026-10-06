@@ -93,7 +93,11 @@ function(nwx_python_module nwx_python_module_name nwx_python_src_dir)
     set(_nwx_py_dest
         "$<IF:$<BOOL:${SKBUILD_PLATLIB_DIR}>,${SKBUILD_PLATLIB_DIR},lib>"
     )
-    install(TARGETS ${nwx_python_module_name}_python DESTINATION "${_nwx_py_dest}")
+    # Same per-project component as install_library() (see install_target.cmake).
+    install(TARGETS ${nwx_python_module_name}_python
+        DESTINATION "${_nwx_py_dest}"
+        COMPONENT "${PROJECT_NAME}"
+    )
     # Co-install the C++ library next to the extension too (in addition to
     # its own normal "lib" install elsewhere in the project) so a
     # self-contained wheel (or plain install) can load it via the rpath set
@@ -102,6 +106,8 @@ function(nwx_python_module nwx_python_module_name nwx_python_src_dir)
     # under LIBRARY/RUNTIME).
     install(TARGETS ${PROJECT_NAME}
         LIBRARY DESTINATION "${_nwx_py_dest}"
+            COMPONENT "${PROJECT_NAME}"
         RUNTIME DESTINATION "${_nwx_py_dest}"
+            COMPONENT "${PROJECT_NAME}"
     )
 endfunction()

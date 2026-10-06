@@ -44,7 +44,7 @@ if(NWX_VENV_SITE_PACKAGES AND NOT NWX_ECOSYSTEM_FROM_SOURCE)
     # always gets a fresh, authoritative search.
     unset(Libxc_DIR CACHE)
     find_package(Libxc CONFIG QUIET
-        PATHS "${NWX_VENV_SITE_PACKAGES}" NO_DEFAULT_PATH
+        PATHS ${NWX_VENV_SITE_PACKAGES} NO_DEFAULT_PATH
     )
 endif()
 if(TARGET Libxc::xc)

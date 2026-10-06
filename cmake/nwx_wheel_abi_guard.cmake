@@ -42,17 +42,24 @@ macro(nwx_assert_wheel_toolchain_supported)
     # Only meaningful once a C++ compiler is known, and only when wheels are
     # actually reachable: a GCC build with no NWX wheels installed is fine,
     # and so is one that has opted out of them.
+    # NWX_VENV_SITE_PACKAGES is a list (see skbuild_python.cmake); any one of
+    # its entries holding wheel-installed CMake packages is enough.
+    set(_nawts_wheel_dir "")
+    foreach(_nawts_dir IN LISTS NWX_VENV_SITE_PACKAGES)
+        if(NOT _nawts_wheel_dir AND EXISTS "${_nawts_dir}/lib/cmake")
+            set(_nawts_wheel_dir "${_nawts_dir}/lib/cmake")
+        endif()
+    endforeach()
     if(APPLE
        AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
-       AND NWX_VENV_SITE_PACKAGES
-       AND NOT NWX_ECOSYSTEM_FROM_SOURCE
-       AND EXISTS "${NWX_VENV_SITE_PACKAGES}/lib/cmake")
+       AND _nawts_wheel_dir
+       AND NOT NWX_ECOSYSTEM_FROM_SOURCE)
         message(FATAL_ERROR
             "Refusing to build: on macOS the installed NWChemEx wheels cannot "
             "be used with GCC.\n"
             "  compiler        : ${CMAKE_CXX_COMPILER_ID} "
             "${CMAKE_CXX_COMPILER_VERSION}\n"
-            "  wheels found in : ${NWX_VENV_SITE_PACKAGES}/lib/cmake\n"
+            "  wheels found in : ${_nawts_wheel_dir}\n"
             "The macOS wheels are built with AppleClang against libc++; GCC on "
             "macOS uses libstdc++.\n\n"
             "Pick one:\n"
@@ -64,4 +71,6 @@ macro(nwx_assert_wheel_toolchain_supported)
             "compilers share one C++ runtime."
         )
     endif()
+    unset(_nawts_wheel_dir)
+    unset(_nawts_dir)
 endmacro()
