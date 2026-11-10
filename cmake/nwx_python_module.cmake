@@ -21,9 +21,8 @@ include_guard()
 # Keyword args (both optional; needed for test-only helper modules like
 # py_test_<repo> or <repo>_examples, which shouldn't ship in the wheel and
 # may need to link libraries beyond ${PROJECT_NAME}):
-#   NO_INSTALL       -- skip installing the module (and re-installing
-#                        ${PROJECT_NAME}). Use for modules that only exist to
-#                        support the test suite.
+#   NO_INSTALL       -- skip installing the module. Use for modules that only
+#                        exist to support the test suite.
 #   DEPENDS <libs>    -- extra libraries linked into the module PRIVATEly,
 #                        in addition to ${PROJECT_NAME}.
 #]]
@@ -69,13 +68,12 @@ function(nwx_python_module nwx_python_module_name nwx_python_src_dir)
 
     # When ${PROJECT_NAME} (and anything *it* links shared, e.g. a
     # FetchContent'd spdlog) is a shared library, the extension loads it at
-    # runtime via an rpath. Search both the extension's own directory --
-    # where ${PROJECT_NAME} is co-installed, below -- and its "lib"
-    # subdirectory, which is where a FetchContent'd shared dependency lands
-    # via *its own* bundled install() rule (e.g. spdlog installs itself to
-    # the plain relative "lib" destination, regardless of this function's
-    # SKBUILD-aware _nwx_py_dest). Harmless when everything is static (the
-    # extension is then self-contained and there's nothing at either path).
+    # runtime via an rpath. Shared libraries are installed only to "lib"
+    # (install_library() for ${PROJECT_NAME}, and each FetchContent'd
+    # dependency's own install() rule), which is the extension's "lib"
+    # subdirectory in a wheel and its own directory in a plain install, so
+    # search both. Harmless when everything is static (the extension is then
+    # self-contained and there's nothing at either path).
     if(APPLE)
         set_target_properties(${nwx_python_module_name}_python
             PROPERTIES INSTALL_RPATH "@loader_path;@loader_path/lib"
@@ -94,20 +92,13 @@ function(nwx_python_module nwx_python_module_name nwx_python_src_dir)
         "$<IF:$<BOOL:${SKBUILD_PLATLIB_DIR}>,${SKBUILD_PLATLIB_DIR},lib>"
     )
     # Same per-project component as install_library() (see install_target.cmake).
+    # N.B. ${PROJECT_NAME} is NOT installed a second time next to the
+    # extension. Two copies of a library in one wheel can both be loaded into
+    # one process (e.g., one found through an "@loader_path" rpath and one
+    # through "@loader_path/lib"). Each copy then has its own RTTI and
+    # statics, so, e.g., a dynamic_cast across the two copies fails.
     install(TARGETS ${nwx_python_module_name}_python
         DESTINATION "${_nwx_py_dest}"
         COMPONENT "${PROJECT_NAME}"
-    )
-    # Co-install the C++ library next to the extension too (in addition to
-    # its own normal "lib" install elsewhere in the project) so a
-    # self-contained wheel (or plain install) can load it via the rpath set
-    # above without depending on relative-path math between the two
-    # locations. This is a no-op for a static library (nothing to install
-    # under LIBRARY/RUNTIME).
-    install(TARGETS ${PROJECT_NAME}
-        LIBRARY DESTINATION "${_nwx_py_dest}"
-            COMPONENT "${PROJECT_NAME}"
-        RUNTIME DESTINATION "${_nwx_py_dest}"
-            COMPONENT "${PROJECT_NAME}"
     )
 endfunction()
